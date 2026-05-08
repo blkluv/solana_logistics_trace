@@ -2,9 +2,10 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
-use rocket::http::{Header, Status};
+use rocket::http::{ContentType, Header, Status};
 use rocket::local::asynchronous::Client;
 use serial_test::serial;
+use bs58;
 use serde_json::{json, Value};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
@@ -42,6 +43,50 @@ impl Drop for EnvVarGuard {
             Some(v) => std::env::set_var(self.key, v),
             None => std::env::remove_var(self.key),
         }
+    }
+}
+
+/// Returns a synthetic `getTransaction` JSON where the program ix data does **not** match
+/// `register_actor` (Etapa 1 sync should surface `WrongInstruction`).
+struct MockSolanaTxWrongDiscriminator;
+
+#[async_trait]
+impl SolanaRpcClient for MockSolanaTxWrongDiscriminator {
+    async fn get_health(&self) -> Result<String, SolanaRpcError> {
+        Ok("ok".into())
+    }
+
+    async fn get_transaction_json(
+        &self,
+        _signature: &str,
+        _commitment: &str,
+    ) -> Result<Value, SolanaRpcError> {
+        let prog = "BPFLoaderUpgradeab1e11111111111111111111111";
+        let wrong = [9u8; 8];
+        let mut payload = wrong.to_vec();
+        payload.push(1);
+        let ix_data = bs58::encode(payload).into_string();
+        Ok(json!({
+            "transaction": {
+                "message": {
+                    "accountKeys": [prog],
+                    "instructions": [{
+                        "programIdIndex": 0u64,
+                        "accounts": [0u64],
+                        "data": ix_data
+                    }]
+                }
+            },
+            "meta": {}
+        }))
+    }
+
+    async fn get_account_data_base64(
+        &self,
+        _pubkey: &str,
+        _commitment: &str,
+    ) -> Result<Option<Vec<u8>>, SolanaRpcError> {
+        Ok(None)
     }
 }
 
@@ -134,6 +179,7 @@ fn config_parses_cors_allowlist_csv() {
     let _cors = EnvVarGuard::set("CORS_ALLOWED_ORIGINS", "http://a.example, https://b.example ");
     let _db = EnvVarGuard::set("DATABASE_URL", "");
     let _rpc = EnvVarGuard::set("SOLANA_RPC_URL", "http://solana.test/");
+    let _pid = EnvVarGuard::remove("PROGRAM_ID");
     let cfg = AppConfig::from_env();
 
     assert_eq!(cfg.backend_port, 9001);
@@ -143,6 +189,7 @@ fn config_parses_cors_allowlist_csv() {
     );
     assert_eq!(cfg.database_url, "");
     assert_eq!(cfg.solana_rpc_url, "http://solana.test/");
+    assert_eq!(cfg.program_id, "");
 }
 
 #[test]
@@ -152,11 +199,13 @@ fn config_defaults_solana_rpc_to_local_validator() {
     let _cors = EnvVarGuard::remove("CORS_ALLOWED_ORIGINS");
     let _bp = EnvVarGuard::remove("BACKEND_PORT");
     let _db = EnvVarGuard::set("DATABASE_URL", "");
+    let _pid = EnvVarGuard::remove("PROGRAM_ID");
 
     let cfg = AppConfig::from_env();
 
     assert_eq!(cfg.backend_port, 8000);
     assert_eq!(cfg.solana_rpc_url, "http://127.0.0.1:8899");
+    assert_eq!(cfg.program_id, "");
     assert_eq!(
         cfg.cors_allowed_origins,
         vec![String::from("http://localhost:3000")]
@@ -195,4 +244,50 @@ async fn http_rpc_client_fails_on_jsonrpc_error_payload() {
 
     let client = HttpSolanaRpcClient::new(mock_server.uri());
     assert!(client.get_health().await.is_err());
+}
+
+#[tokio::test]
+async fn actors_sync_returns_503_when_program_id_unconfigured() {
+    let pool = lazy_unreachable_pool();
+    let origins = vec!["http://localhost:3000".into()];
+    let cors = cors_for_origins(&origins);
+    let mut cfg = AppConfig::for_tests();
+    cfg.program_id.clear();
+    let solana: Arc<dyn SolanaRpcClient> = Arc::new(MockSolanaOk);
+    let rocket = build_rocket(pool, cors, solana, cfg);
+    let client = Client::tracked(rocket).await.expect("client");
+
+    let fake_sig = bs58::encode([0u8; 64]).into_string();
+    let body = json!({ "tx_hash": fake_sig }).to_string();
+    let response = client
+        .post("/api/v1/actors/sync")
+        .header(ContentType::JSON)
+        .body(body)
+        .dispatch()
+        .await;
+
+    assert_eq!(response.status(), Status::ServiceUnavailable);
+}
+
+#[tokio::test]
+async fn actors_sync_returns_422_when_instruction_discriminator_mismatch() {
+    let pool = lazy_unreachable_pool();
+    let origins = vec!["http://localhost:3000".into()];
+    let cors = cors_for_origins(&origins);
+    let mut cfg = AppConfig::for_tests();
+    cfg.program_id = "BPFLoaderUpgradeab1e11111111111111111111111".into();
+    let solana: Arc<dyn SolanaRpcClient> = Arc::new(MockSolanaTxWrongDiscriminator);
+    let rocket = build_rocket(pool, cors, solana, cfg);
+    let client = Client::tracked(rocket).await.expect("client");
+
+    let fake_sig = bs58::encode([0u8; 64]).into_string();
+    let body = json!({ "tx_hash": fake_sig }).to_string();
+    let response = client
+        .post("/api/v1/actors/sync")
+        .header(ContentType::JSON)
+        .body(body)
+        .dispatch()
+        .await;
+
+    assert_eq!(response.status(), Status::UnprocessableEntity);
 }
