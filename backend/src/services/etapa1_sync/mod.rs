@@ -1,8 +1,10 @@
 //! Etapa 1 — sync pipeline (§8–§9). Handlers stay thin; orchestration here; SQL in `repos/`.
 
 mod actor;
+mod shipment;
 
 pub use actor::sync_actor;
+pub use shipment::sync_shipment;
 
 use std::sync::Arc;
 
@@ -35,6 +37,23 @@ pub struct ActorSyncResponse {
     pub name: String,
     pub location: Option<String>,
     pub registration_tx_hash: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ShipmentSyncResponse {
+    pub shipment_id: uuid::Uuid,
+    #[serde(serialize_with = "serialize_u64_string")]
+    pub on_chain_shipment_id: u64,
+    pub status: String,
+    pub creation_tx_hash: String,
+}
+
+fn serialize_u64_string<S>(v: &u64, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    serializer.serialize_str(&v.to_string())
 }
 
 pub struct SyncOutcome<T> {

@@ -34,6 +34,7 @@ pub fn build_rocket(
             routes![
                 handlers::solana::solana_health_rpc,
                 handlers::sync::post_sync_actor,
+                handlers::sync::post_sync_shipment,
             ],
         )
 }

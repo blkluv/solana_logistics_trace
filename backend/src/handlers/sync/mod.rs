@@ -1,8 +1,10 @@
 //! Etapa 1 sync HTTP handlers (thin).
 
 mod actor;
+mod shipment;
 
 pub use actor::post_sync_actor;
+pub use shipment::post_sync_shipment;
 
 use rocket::http::Status;
 use rocket::serde::json::Json;
