@@ -8,3 +8,7 @@ build/
 .next/
 target/
 coverage/
+.npm-user-cache/
+frontend/.npm-cache/
+tmp-npm-tmp/
+build-home/
