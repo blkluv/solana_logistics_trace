@@ -6,6 +6,7 @@ pub struct AppConfig {
     pub backend_port: u16,
     pub database_url: String,
     pub cors_allowed_origins: Vec<String>,
+    pub solana_rpc_url: String,
 }
 
 fn parse_origins(raw: &str) -> Vec<String> {
@@ -36,10 +37,14 @@ impl AppConfig {
             Err(_) => parse_origins("http://localhost:3000"),
         };
 
+        let solana_rpc_url = env::var("SOLANA_RPC_URL")
+            .unwrap_or_else(|_| "http://127.0.0.1:8899".into());
+
         Self {
             backend_port,
             database_url,
             cors_allowed_origins,
+            solana_rpc_url,
         }
     }
 }

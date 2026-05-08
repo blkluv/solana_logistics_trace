@@ -1,4 +1,9 @@
-use logistics_trace_backend::{build_rocket, config::AppConfig, cors, db};
+use std::sync::Arc;
+
+use logistics_trace_backend::{
+    build_rocket, config::AppConfig, cors, db, solana::rpc_http::HttpSolanaRpcClient,
+    solana::SolanaRpcClient,
+};
 
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
@@ -14,10 +19,13 @@ async fn main() -> Result<(), rocket::Error> {
         .await
         .unwrap_or_else(|e| panic!("PostgreSQL pool: {e}"));
 
+    let solana: Arc<dyn SolanaRpcClient> =
+        Arc::new(HttpSolanaRpcClient::new(cfg.solana_rpc_url.clone()));
+
     let cors_policy = cors::cors_for_origins(&cfg.cors_allowed_origins);
     let figment = rocket::Config::figment().merge(("port", cfg.backend_port));
 
-    build_rocket(pool, cors_policy)
+    build_rocket(pool, cors_policy, solana)
         .configure(figment)
         .launch()
         .await?;
