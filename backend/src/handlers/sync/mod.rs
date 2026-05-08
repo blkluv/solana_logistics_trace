@@ -1,9 +1,11 @@
 //! Etapa 1 sync HTTP handlers (thin).
 
 mod actor;
+mod checkpoint;
 mod shipment;
 
 pub use actor::post_sync_actor;
+pub use checkpoint::post_sync_checkpoint;
 pub use shipment::post_sync_shipment;
 
 use rocket::http::Status;
