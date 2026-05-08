@@ -212,6 +212,22 @@ fn config_defaults_solana_rpc_to_local_validator() {
     );
 }
 
+#[test]
+#[serial]
+fn config_treats_dotenv_example_program_id_placeholder_as_unset() {
+    let _bp = EnvVarGuard::remove("BACKEND_PORT");
+    let _cors = EnvVarGuard::remove("CORS_ALLOWED_ORIGINS");
+    let _db = EnvVarGuard::set("DATABASE_URL", "");
+    let _rpc = EnvVarGuard::set("SOLANA_RPC_URL", "http://127.0.0.1:8899");
+    let _pid = EnvVarGuard::set(
+        "PROGRAM_ID",
+        "  ReplaceWithProgramIdAfterDeploy ",
+    );
+
+    let cfg = AppConfig::from_env();
+    assert_eq!(cfg.program_id, "");
+}
+
 #[tokio::test]
 async fn http_rpc_client_reads_get_health_result() {
     let mock_server = MockServer::start().await;

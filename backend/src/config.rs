@@ -42,7 +42,15 @@ impl AppConfig {
         let solana_rpc_url = env::var("SOLANA_RPC_URL")
             .unwrap_or_else(|_| "http://127.0.0.1:8899".into());
 
-        let program_id = env::var("PROGRAM_ID").unwrap_or_else(|_| String::new());
+        let mut program_id = env::var("PROGRAM_ID").unwrap_or_else(|_| String::new());
+        program_id = program_id.trim().to_string();
+        // `.env.example` placeholder — not a real pubkey; behave like unset (sync → 503).
+        if program_id.eq_ignore_ascii_case("ReplaceWithProgramIdAfterDeploy") {
+            eprintln!(
+                "warning: PROGRAM_ID is still the template value — treating as unset; set a real base58 program id for POST /api/v1/*/sync"
+            );
+            program_id.clear();
+        }
         if !program_id.is_empty() && !valid_solana_pubkey_base58(&program_id) {
             eprintln!("PROGRAM_ID is set but is not a valid base58 32-byte pubkey");
             std::process::exit(1);
