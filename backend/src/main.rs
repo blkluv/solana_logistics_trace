@@ -15,6 +15,12 @@ async fn main() -> Result<(), rocket::Error> {
         std::process::exit(1);
     }
 
+    if cfg.program_id.is_empty() {
+        eprintln!(
+            "warning: PROGRAM_ID unset — Etapa 1 POST /api/v1/*/sync endpoints will return 503"
+        );
+    }
+
     let pool = db::create_pool(&cfg.database_url)
         .await
         .unwrap_or_else(|e| panic!("PostgreSQL pool: {e}"));
@@ -29,7 +35,7 @@ async fn main() -> Result<(), rocket::Error> {
     let cors_policy = cors::cors_for_origins(&cfg.cors_allowed_origins);
     let figment = rocket::Config::figment().merge(("port", cfg.backend_port));
 
-    build_rocket(pool, cors_policy, solana)
+    build_rocket(pool, cors_policy, solana, cfg.clone())
         .configure(figment)
         .launch()
         .await?;

@@ -82,7 +82,7 @@ async fn tracked_client_with_mock_solana(origins: Vec<String>) -> Client {
     let pool = lazy_unreachable_pool();
     let cors = cors_for_origins(&origins);
     let solana: Arc<dyn SolanaRpcClient> = Arc::new(MockSolanaOk);
-    let rocket = build_rocket(pool, cors, solana);
+    let rocket = build_rocket(pool, cors, solana, AppConfig::for_tests());
     Client::tracked(rocket).await.expect("client")
 }
 
