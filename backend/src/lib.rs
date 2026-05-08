@@ -1,7 +1,9 @@
 pub mod config;
 pub mod cors;
 pub mod db;
+pub mod domain;
 pub mod handlers;
+pub mod repos;
 pub mod solana;
 
 use std::sync::Arc;

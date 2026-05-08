@@ -7,6 +7,8 @@ pub struct AppConfig {
     pub database_url: String,
     pub cors_allowed_origins: Vec<String>,
     pub solana_rpc_url: String,
+    /// Base58 program id for sync validation (§9).
+    pub program_id: String,
 }
 
 fn parse_origins(raw: &str) -> Vec<String> {
@@ -40,11 +42,36 @@ impl AppConfig {
         let solana_rpc_url = env::var("SOLANA_RPC_URL")
             .unwrap_or_else(|_| "http://127.0.0.1:8899".into());
 
+        let program_id = env::var("PROGRAM_ID").unwrap_or_else(|_| String::new());
+        if !program_id.is_empty() && !valid_solana_pubkey_base58(&program_id) {
+            eprintln!("PROGRAM_ID is set but is not a valid base58 32-byte pubkey");
+            std::process::exit(1);
+        }
+
         Self {
             backend_port,
             database_url,
             cors_allowed_origins,
             solana_rpc_url,
+            program_id,
         }
     }
+
+    /// Minimal config for unit tests (health + CORS); sync routes need real `PROGRAM_ID`.
+    pub fn for_tests() -> Self {
+        Self {
+            backend_port: 8000,
+            database_url: String::new(),
+            cors_allowed_origins: vec!["http://localhost:3000".into()],
+            solana_rpc_url: "http://127.0.0.1:8899".into(),
+            program_id: "BPFLoaderUpgradeab1e11111111111111111111111".into(),
+        }
+    }
+}
+
+fn valid_solana_pubkey_base58(s: &str) -> bool {
+    bs58::decode(s)
+        .into_vec()
+        .map(|v| v.len() == 32)
+        .unwrap_or(false)
 }
