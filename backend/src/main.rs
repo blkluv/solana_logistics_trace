@@ -19,6 +19,10 @@ async fn main() -> Result<(), rocket::Error> {
         .await
         .unwrap_or_else(|e| panic!("PostgreSQL pool: {e}"));
 
+    db::run_migrations(&pool)
+        .await
+        .unwrap_or_else(|e| panic!("database migrations: {e}"));
+
     let solana: Arc<dyn SolanaRpcClient> =
         Arc::new(HttpSolanaRpcClient::new(cfg.solana_rpc_url.clone()));
 
