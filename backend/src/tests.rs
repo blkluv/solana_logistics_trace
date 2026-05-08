@@ -52,6 +52,22 @@ impl SolanaRpcClient for MockSolanaOk {
     async fn get_health(&self) -> Result<String, SolanaRpcError> {
         Ok("ok".into())
     }
+
+    async fn get_transaction_json(
+        &self,
+        _signature: &str,
+        _commitment: &str,
+    ) -> Result<Value, SolanaRpcError> {
+        Ok(json!({ "result": null }))
+    }
+
+    async fn get_account_data_base64(
+        &self,
+        _pubkey: &str,
+        _commitment: &str,
+    ) -> Result<Option<Vec<u8>>, SolanaRpcError> {
+        Ok(None)
+    }
 }
 
 fn lazy_unreachable_pool() -> PgPool {

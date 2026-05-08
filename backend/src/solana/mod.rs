@@ -1,6 +1,7 @@
 pub mod rpc_http;
 
 use async_trait::async_trait;
+use serde_json::Value;
 
 /// Transport or JSON-RPC level failure surfaced to handlers.
 #[derive(Debug, Clone)]
@@ -25,4 +26,18 @@ impl From<reqwest::Error> for SolanaRpcError {
 pub trait SolanaRpcClient: Send + Sync {
     /// JSON-RPC [`getHealth`](https://solana.com/docs/rpc/http/gethealth) result (`"ok"` when healthy).
     async fn get_health(&self) -> Result<String, SolanaRpcError>;
+
+    /// [`getTransaction`](https://solana.com/docs/rpc/http/gettransaction) with `encoding: json`.
+    async fn get_transaction_json(
+        &self,
+        signature: &str,
+        commitment: &str,
+    ) -> Result<Value, SolanaRpcError>;
+
+    /// [`getAccountInfo`](https://solana.com/docs/rpc/http/getaccountinfo) returning raw account data bytes (`encoding: base64`).
+    async fn get_account_data_base64(
+        &self,
+        pubkey: &str,
+        commitment: &str,
+    ) -> Result<Option<Vec<u8>>, SolanaRpcError>;
 }
