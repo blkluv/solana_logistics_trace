@@ -7,8 +7,9 @@ use anchor_lang::prelude::*;
 
 pub use constants::*;
 pub use instructions::*;
+pub use state::*;
 
-declare_id!("DTExdaP7V1Ng2idBU1asgt3TGzH39PLAzdTCk7Dsa5Pw");
+declare_id!("CqNEvq5AtuZH7ffQCrt63m5M9g3MLhsvgVnXYS5fMbEc");
 
 #[program]
 pub mod logistics_traceability {

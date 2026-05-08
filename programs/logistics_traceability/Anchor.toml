@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-logistics_traceability = "DTExdaP7V1Ng2idBU1asgt3TGzH39PLAzdTCk7Dsa5Pw"
+logistics_traceability = "CqNEvq5AtuZH7ffQCrt63m5M9g3MLhsvgVnXYS5fMbEc"
 
 [registry]
 url = "https://api.apr.dev"
