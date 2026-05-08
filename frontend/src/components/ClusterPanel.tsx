@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Connection } from "@solana/web3.js";
 
 export type ClusterPanelProps = {
     network: string;
@@ -9,22 +8,29 @@ export type ClusterPanelProps = {
     programId: string;
 };
 
-/** Shows configured cluster (env) plus a best-effort `getVersion` against the RPC URL. */
+type VersionPayload = {
+    ok?: boolean;
+    solanaCore?: string;
+    hint?: string;
+};
+
+/** Shows configured cluster (env) plus `getVersion` via same-origin API (avoids RPC CORS). */
 export function ClusterPanel({ network, rpcUrl, programId }: ClusterPanelProps) {
     const [rpcHint, setRpcHint] = useState<string>("…");
 
     useEffect(() => {
         let cancel = false;
-        const conn = new Connection(rpcUrl, "confirmed");
-        conn
-            .getVersion()
-            .then((v) => {
-                const core =
-                    typeof v === "object" && v !== null && "solana-core" in v
-                        ? String((v as { "solana-core": string })["solana-core"])
-                        : JSON.stringify(v);
-                if (!cancel) {
-                    setRpcHint(core);
+
+        fetch("/api/solana/version")
+            .then((r) => r.json() as Promise<VersionPayload>)
+            .then((data) => {
+                if (cancel) {
+                    return;
+                }
+                if (data.ok && data.solanaCore) {
+                    setRpcHint(data.solanaCore);
+                } else {
+                    setRpcHint(data.hint ?? "unreachable");
                 }
             })
             .catch(() => {
@@ -32,10 +38,11 @@ export function ClusterPanel({ network, rpcUrl, programId }: ClusterPanelProps) 
                     setRpcHint("unreachable");
                 }
             });
+
         return () => {
             cancel = true;
         };
-    }, [rpcUrl]);
+    }, []);
 
     return (
         <section
@@ -46,6 +53,10 @@ export function ClusterPanel({ network, rpcUrl, programId }: ClusterPanelProps) 
             <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
                 Cluster (from env)
             </h2>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                RPC reachability is checked through this app (server proxy), not from the browser,
+                because validators do not expose CORS for browser JSON-RPC.
+            </p>
             <dl className="grid grid-cols-[min-content_1fr] gap-x-6 gap-y-2 text-sm">
                 <dt className="text-zinc-500 dark:text-zinc-400">Network</dt>
                 <dd data-testid="cluster-network">{network}</dd>

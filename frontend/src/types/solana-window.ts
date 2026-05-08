@@ -8,8 +8,10 @@ export type PhantomLikeProvider = {
 
 declare global {
     interface Window {
-        /** Injected browserside by Phantom (`window.solana`). */
+        /** Standard injection (`window.solana`). */
         solana?: PhantomLikeProvider;
+        /** Phantom on some browsers (e.g. Firefox) nests under `phantom.solana`. */
+        phantom?: { solana?: PhantomLikeProvider };
     }
 }
 

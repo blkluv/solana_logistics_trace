@@ -58,6 +58,7 @@ describe("PhantomConnect", () => {
             expect(screen.getByTestId("wallet-pubkey")).toHaveTextContent(pk),
         );
         expect(connect).toHaveBeenCalledTimes(1);
+        expect(connect).toHaveBeenCalledWith({ onlyIfTrusted: false });
     });
 
     it("surfaces guidance when Phantom is missing", async () => {
@@ -70,7 +71,7 @@ describe("PhantomConnect", () => {
         fireEvent.click(screen.getByTestId("phantom-connect-button"));
         await waitFor(() =>
             expect(screen.getByTestId("phantom-error")).toHaveTextContent(
-                "Phantom extension not found.",
+                /Phantom extension not found/i,
             ),
         );
     });

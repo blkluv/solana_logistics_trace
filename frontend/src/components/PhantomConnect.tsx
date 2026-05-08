@@ -4,12 +4,43 @@ import { useCallback, useState } from "react";
 
 import type { PhantomLikeProvider } from "@/types/solana-window";
 
-/** Returns the Phantom-compatible provider exposed on `window.solana`. */
+function formatPhantomConnectError(err: unknown): string {
+    if (!(err instanceof Error)) {
+        return "Connection rejected.";
+    }
+    const m = err.message;
+    if (/Receiving end does not exist/i.test(m)) {
+        return (
+            "Phantom could not complete the request (extension messaging failed). " +
+            "Reload this tab or restart the browser; update Phantom if the problem continues."
+        );
+    }
+    if (/could not establish connection/i.test(m)) {
+        return (
+            "Could not reach the Phantom extension. Reload the page, or disable other Solana " +
+            "wallet extensions that might conflict."
+        );
+    }
+    return m;
+}
+
+/** Returns Phantom provider (`window.solana` or `window.phantom.solana`). */
 export function getPhantom(): PhantomLikeProvider | undefined {
     if (typeof window === "undefined") {
         return undefined;
     }
-    return window.solana;
+
+    const standard = window.solana;
+    const nested = window.phantom?.solana;
+
+    if (standard?.isPhantom) {
+        return standard;
+    }
+    if (nested?.isPhantom) {
+        return nested;
+    }
+
+    return standard ?? nested;
 }
 
 /** Minimal Phantom connector (Etapa 0 — backend never signs). */
@@ -21,15 +52,16 @@ export function PhantomConnect() {
         setError(null);
         const p = getPhantom();
         if (!p?.isPhantom) {
-            setError("Phantom extension not found.");
+            setError(
+                "Phantom extension not found. Install Phantom and refresh; on Firefox use phantom.app.",
+            );
             return;
         }
         try {
-            const out = await p.connect();
+            const out = await p.connect({ onlyIfTrusted: false });
             setPublicKey(out.publicKey.toBase58());
         } catch (e) {
-            const msg = e instanceof Error ? e.message : "Connection rejected.";
-            setError(msg);
+            setError(formatPhantomConnectError(e));
         }
     }, []);
 
