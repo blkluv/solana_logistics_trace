@@ -1,59 +1,29 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import type { PhantomLikeProvider } from "@/types/solana-window";
+import { formatPhantomConnectError, getPhantom } from "@/lib/wallet/phantom";
 
-function formatPhantomConnectError(err: unknown): string {
-    if (!(err instanceof Error)) {
-        return "Connection rejected.";
-    }
-    const m = err.message;
-    if (/Receiving end does not exist/i.test(m)) {
-        return (
-            "Phantom could not complete the request (extension messaging failed). " +
-            "Reload this tab or restart the browser; update Phantom if the problem continues."
-        );
-    }
-    if (/could not establish connection/i.test(m)) {
-        return (
-            "Could not reach the Phantom extension. Reload the page, or disable other Solana " +
-            "wallet extensions that might conflict."
-        );
-    }
-    return m;
-}
+export type PhantomConnectProps = {
+    /** Se invoca cuando cambia la clave tras connect/disconnect */
+    onPublicKeyChange?: (address: string | null) => void;
+};
 
-/** Returns Phantom provider (`window.solana` or `window.phantom.solana`). */
-export function getPhantom(): PhantomLikeProvider | undefined {
-    if (typeof window === "undefined") {
-        return undefined;
-    }
-
-    const standard = window.solana;
-    const nested = window.phantom?.solana;
-
-    if (standard?.isPhantom) {
-        return standard;
-    }
-    if (nested?.isPhantom) {
-        return nested;
-    }
-
-    return standard ?? nested;
-}
-
-/** Minimal Phantom connector (Etapa 0 — backend never signs). */
-export function PhantomConnect() {
+/** Conector Phantom mínimo (Etapa 0–1 — el backend no firma nunca). */
+export function PhantomConnect({ onPublicKeyChange }: PhantomConnectProps) {
     const [publicKey, setPublicKey] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        onPublicKeyChange?.(publicKey);
+    }, [publicKey, onPublicKeyChange]);
 
     const onConnect = useCallback(async () => {
         setError(null);
         const p = getPhantom();
         if (!p?.isPhantom) {
             setError(
-                "Phantom extension not found. Install Phantom and refresh; on Firefox use phantom.app.",
+                "Phantom no encontrado. Instala la extensión y recarga; en Firefox usa phantom.app.",
             );
             return;
         }
@@ -76,40 +46,36 @@ export function PhantomConnect() {
 
     return (
         <div className="space-y-3" data-testid="phantom-connect">
-            <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
-                Phantom wallet
-            </h2>
+            <h2 className="text-lg font-semibold text-[var(--color-text)]">Phantom wallet</h2>
             {publicKey ? (
                 <>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                        Connected public key:
-                    </p>
+                    <p className="text-sm text-muted">Clave conectada:</p>
                     <p
-                        className="break-all font-mono text-sm text-zinc-900 dark:text-zinc-100"
+                        className="mono break-all text-sm text-[var(--color-text)]"
                         data-testid="wallet-pubkey"
                     >
                         {publicKey}
                     </p>
                     <button
                         type="button"
+                        className="btn btn--ghost"
                         onClick={onDisconnect}
-                        className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-800 shadow-xs hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
                     >
-                        Disconnect
+                        Desconectar
                     </button>
                 </>
             ) : (
                 <button
                     type="button"
                     onClick={onConnect}
-                    className="rounded-md bg-purple-600 px-3 py-2 text-sm font-medium text-white shadow hover:bg-purple-700"
+                    className="btn btn--primary"
                     data-testid="phantom-connect-button"
                 >
-                    Connect Phantom
+                    Conectar Phantom
                 </button>
             )}
             {error ? (
-                <p role="alert" className="text-sm text-red-600" data-testid="phantom-error">
+                <p role="alert" className="text-sm" style={{ color: "var(--color-danger)" }} data-testid="phantom-error">
                     {error}
                 </p>
             ) : null}
