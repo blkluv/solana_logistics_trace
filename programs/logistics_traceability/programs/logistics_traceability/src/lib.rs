@@ -29,4 +29,14 @@ pub mod logistics_traceability {
     ) -> Result<()> {
         process_register_actor(ctx, role, name, location)
     }
+
+    pub fn create_shipment(
+        ctx: Context<CreateShipment>,
+        product: String,
+        origin: String,
+        destination: String,
+        requires_cold_chain: bool,
+    ) -> Result<()> {
+        process_create_shipment(ctx, product, origin, destination, requires_cold_chain)
+    }
 }

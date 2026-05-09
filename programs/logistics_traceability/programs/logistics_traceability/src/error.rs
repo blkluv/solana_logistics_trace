@@ -8,4 +8,8 @@ pub enum ErrorCode {
     InvalidActorName,
     #[msg("Location string exceeds 256 bytes")]
     LocationTooLong,
+    #[msg("Invalid recipient pubkey")]
+    InvalidRecipient,
+    #[msg("String exceeds maximum length for this field")]
+    StringTooLong,
 }
