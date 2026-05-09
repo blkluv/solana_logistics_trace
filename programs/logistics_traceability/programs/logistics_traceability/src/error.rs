@@ -12,4 +12,6 @@ pub enum ErrorCode {
     InvalidRecipient,
     #[msg("String exceeds maximum length for this field")]
     StringTooLong,
+    #[msg("Checkpoint metadata exceeds 512 bytes")]
+    MetadataTooLong,
 }

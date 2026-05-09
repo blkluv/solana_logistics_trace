@@ -39,4 +39,26 @@ pub mod logistics_traceability {
     ) -> Result<()> {
         process_create_shipment(ctx, product, origin, destination, requires_cold_chain)
     }
+
+    pub fn record_checkpoint(
+        ctx: Context<RecordCheckpoint>,
+        checkpoint_type: CheckpointType,
+        location: String,
+        latitude: Option<i32>,
+        longitude: Option<i32>,
+        temperature: Option<i16>,
+        humidity: Option<u8>,
+        metadata: String,
+    ) -> Result<()> {
+        process_record_checkpoint(
+            ctx,
+            checkpoint_type,
+            location,
+            latitude,
+            longitude,
+            temperature,
+            humidity,
+            metadata,
+        )
+    }
 }
