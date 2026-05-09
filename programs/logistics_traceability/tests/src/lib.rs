@@ -6,3 +6,6 @@ mod test_initialize;
 
 #[cfg(test)]
 mod test_register_actor;
+
+#[cfg(test)]
+mod test_create_shipment;
