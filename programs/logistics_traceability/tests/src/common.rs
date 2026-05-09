@@ -6,12 +6,16 @@ use anchor_client::{
     solana_sdk::{
         commitment_config::CommitmentConfig,
         pubkey::Pubkey,
-        signature::{read_keypair_file, Signer},
+        signature::{read_keypair_file, Signature, Signer},
         system_program,
     },
     Client, Cluster, Program,
 };
 use anchor_lang::AccountDeserialize;
+use base64::Engine;
+use solana_commitment_config::CommitmentConfig as RpcCommitmentConfig;
+use solana_rpc_client_api::config::RpcTransactionConfig;
+use solana_transaction_status_client_types::{OptionSerializer, UiTransactionEncoding};
 
 use logistics_traceability::{
     accounts::Initialize as InitAccounts,
@@ -72,4 +76,47 @@ where
         .get_account(&pk)
         .expect("program config account");
     ProgramConfig::try_deserialize(&mut &acc.data[..]).expect("decode ProgramConfig")
+}
+
+/// Parses `getTransaction` logs (includes Anchor `emit!` `Program data:` lines).
+pub fn rpc_transaction_logs<C>(program: &Program<C>, sig: &Signature) -> Vec<String>
+where
+    C: Clone + Deref<Target = impl Signer>,
+{
+    let config = RpcTransactionConfig {
+        encoding: Some(UiTransactionEncoding::Json),
+        commitment: Some(RpcCommitmentConfig::confirmed()),
+        max_supported_transaction_version: Some(0),
+    };
+    let response = program
+        .rpc()
+        .get_transaction_with_config(sig, config)
+        .expect("get_transaction");
+    let meta = response
+        .transaction
+        .meta
+        .expect("transaction status meta");
+    match meta.log_messages {
+        OptionSerializer::Some(logs) => logs,
+        _ => Vec::new(),
+    }
+}
+
+pub fn logs_contain_anchor_event<T>(logs: &[String]) -> bool
+where
+    T: anchor_lang::Event,
+{
+    let disc = T::DISCRIMINATOR;
+    for line in logs {
+        let Some(rest) = line.strip_prefix("Program data: ") else {
+            continue;
+        };
+        let Ok(raw) = base64::engine::general_purpose::STANDARD.decode(rest.trim()) else {
+            continue;
+        };
+        if raw.len() >= disc.len() && raw[..disc.len()] == *disc {
+            return true;
+        }
+    }
+    false
 }

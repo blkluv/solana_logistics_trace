@@ -8,5 +8,9 @@ rust-version = "1.89.0"
 [dependencies]
 anchor-client = "0.32.1"
 anchor-lang = "0.32.1"
+base64 = "0.22"
 logistics_traceability = { version = "0.1.0", path = "../programs/logistics_traceability" }
 serial_test = "3"
+solana-commitment-config = "2.2.1"
+solana-rpc-client-api = "2.3.13"
+solana-transaction-status-client-types = "2.3.13"
