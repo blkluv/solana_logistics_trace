@@ -1,9 +1,12 @@
+import type { Transaction } from "@solana/web3.js";
+
 export type PhantomLikeProvider = {
     isPhantom?: boolean;
     connect(opts?: {
         onlyIfTrusted?: boolean;
     }): Promise<{ publicKey: { toBase58(): string } }>;
     disconnect?: () => Promise<void>;
+    signTransaction?: (tx: Transaction) => Promise<Transaction>;
 };
 
 declare global {
