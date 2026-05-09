@@ -9,3 +9,6 @@ mod test_register_actor;
 
 #[cfg(test)]
 mod test_create_shipment;
+
+#[cfg(test)]
+mod test_record_checkpoint;
