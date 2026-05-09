@@ -26,7 +26,7 @@ use crate::common::*;
 #[test]
 #[serial_test::serial]
 fn record_checkpoint_increments_shipment_checkpoint_count() {
-    let payer = load_payer_keypair();
+    let payer = ephemeral_funded_payer();
     let client = client_with_payer(&payer);
     let program = client.program(ID).unwrap();
     initialize_if_needed(&program);

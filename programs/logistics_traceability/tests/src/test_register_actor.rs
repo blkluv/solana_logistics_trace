@@ -20,7 +20,7 @@ use crate::common::*;
 #[test]
 #[serial_test::serial]
 fn register_actor_happy_path_writes_actor_account() {
-    let payer = load_payer_keypair();
+    let payer = ephemeral_funded_payer();
     let client = client_with_payer(&payer);
     let program = client.program(ID).unwrap();
     initialize_if_needed(&program);
@@ -28,6 +28,8 @@ fn register_actor_happy_path_writes_actor_account() {
     let cfg_pda = cfg_pda();
     let (actor_pda, _) =
         Pubkey::find_program_address(&[ACTOR_SEED, payer.pubkey().as_ref()], &ID);
+
+    let cfg_before_reg = fetch_program_config(&program);
 
     program
         .request()
@@ -56,14 +58,17 @@ fn register_actor_happy_path_writes_actor_account() {
     assert_eq!(actor.location, None);
     assert!(actor.is_active);
 
-    let cfg = fetch_program_config(&program);
-    assert_eq!(cfg.actors_registered, 1);
+    let cfg_after_reg = fetch_program_config(&program);
+    assert_eq!(
+        cfg_after_reg.actors_registered,
+        cfg_before_reg.actors_registered + 1
+    );
 }
 
 #[test]
 #[serial_test::serial]
 fn register_actor_rejects_empty_name() {
-    let payer = load_payer_keypair();
+    let payer = ephemeral_funded_payer();
     let client = client_with_payer(&payer);
     let program = client.program(ID).unwrap();
     initialize_if_needed(&program);
@@ -93,7 +98,7 @@ fn register_actor_rejects_empty_name() {
 #[test]
 #[serial_test::serial]
 fn register_actor_rejects_location_too_long() {
-    let payer = load_payer_keypair();
+    let payer = ephemeral_funded_payer();
     let client = client_with_payer(&payer);
     let program = client.program(ID).unwrap();
     initialize_if_needed(&program);

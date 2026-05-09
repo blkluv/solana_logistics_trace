@@ -23,7 +23,7 @@ use crate::common::*;
 #[test]
 #[serial_test::serial]
 fn actor_registered_event_discriminator_in_transaction_logs() {
-    let payer = load_payer_keypair();
+    let payer = ephemeral_funded_payer();
     let client = client_with_payer(&payer);
     let program = client.program(ID).unwrap();
     initialize_if_needed(&program);
@@ -58,7 +58,7 @@ fn actor_registered_event_discriminator_in_transaction_logs() {
 #[test]
 #[serial_test::serial]
 fn shipment_created_event_discriminator_in_transaction_logs() {
-    let payer = load_payer_keypair();
+    let payer = ephemeral_funded_payer();
     let client = client_with_payer(&payer);
     let program = client.program(ID).unwrap();
     initialize_if_needed(&program);
@@ -116,7 +116,7 @@ fn shipment_created_event_discriminator_in_transaction_logs() {
 #[test]
 #[serial_test::serial]
 fn checkpoint_recorded_event_discriminator_in_transaction_logs() {
-    let payer = load_payer_keypair();
+    let payer = ephemeral_funded_payer();
     let client = client_with_payer(&payer);
     let program = client.program(ID).unwrap();
     initialize_if_needed(&program);

@@ -20,7 +20,7 @@ use crate::common::*;
 #[test]
 #[serial_test::serial]
 fn create_shipment_increments_program_config_and_sender_actor_counters() {
-    let payer = load_payer_keypair();
+    let payer = ephemeral_funded_payer();
     let client = client_with_payer(&payer);
     let program = client.program(ID).unwrap();
     initialize_if_needed(&program);

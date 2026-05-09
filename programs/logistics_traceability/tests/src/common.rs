@@ -1,10 +1,13 @@
 #![allow(deprecated)]
 
+use std::thread;
+use std::time::Duration;
+
 use anchor_client::{
     solana_sdk::{
         commitment_config::CommitmentConfig,
         pubkey::Pubkey,
-        signature::{read_keypair_file, Keypair, Signature},
+        signature::{read_keypair_file, Keypair, Signature, Signer},
         system_program,
     },
     Client, Cluster, Program,
@@ -25,6 +28,9 @@ use logistics_traceability::{
     state::ProgramConfig,
     ID,
 };
+use solana_rpc_client::rpc_client::RpcClient;
+
+const LOCALNET_RPC: &str = "http://127.0.0.1:8899";
 
 pub fn load_payer_keypair() -> anchor_client::solana_sdk::signature::Keypair {
     let wallet_path = std::env::var("ANCHOR_WALLET").unwrap_or_else(|_| {
@@ -32,6 +38,34 @@ pub fn load_payer_keypair() -> anchor_client::solana_sdk::signature::Keypair {
         format!("{home}/.config/solana/id.json")
     });
     read_keypair_file(wallet_path.as_str()).expect("read payer keypair")
+}
+
+/// Fund a fresh keypair on localnet (each integration test gets its own payer → no PDA collisions).
+pub fn ephemeral_funded_payer() -> Keypair {
+    let kp = Keypair::new();
+    ensure_localnet_lamports(&kp, 1_000_000_000);
+    kp
+}
+
+/// Ensure SOL for fee payer (CLI wallet used by `initialize` idempotency test).
+pub fn ensure_localnet_lamports(keypair: &Keypair, min_lamports: u64) {
+    let rpc = RpcClient::new_with_commitment(LOCALNET_RPC, RpcCommitmentConfig::confirmed());
+    let balance = rpc
+        .get_balance(&keypair.pubkey())
+        .expect("RPC get_balance failed; start solana-test-validator on localhost:8899");
+    if balance >= min_lamports {
+        return;
+    }
+    let sig = rpc
+        .request_airdrop(&keypair.pubkey(), 5_000_000_000)
+        .expect("localnet airdrop; check validator faucet");
+    for _ in 0..60 {
+        match rpc.confirm_transaction(&sig) {
+            Ok(true) => return,
+            Ok(false) | Err(_) => thread::sleep(Duration::from_millis(150)),
+        }
+    }
+    panic!("airdrop confirmation timeout");
 }
 
 pub fn client_with_payer(

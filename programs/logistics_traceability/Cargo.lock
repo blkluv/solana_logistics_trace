@@ -5026,6 +5026,7 @@ dependencies = [
  "logistics_traceability",
  "serial_test",
  "solana-commitment-config",
+ "solana-rpc-client",
  "solana-rpc-client-api",
  "solana-transaction-status-client-types",
 ]
