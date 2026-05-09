@@ -1,33 +1,35 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
+
+import { SiteFooter } from "@/components/layout/SiteFooter";
+import { SiteHeader } from "@/components/layout/SiteHeader";
+
+import "@/styles/tracesol.css";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const inter = Inter({
+    subsets: ["latin"],
+    variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
-  title: "TMF · Trazabilidad logística",
-  description: "Conexión Phantom y visualización de red Solana (.env público)",
+    title: "TraceSol Logistics · Trazabilidad",
+    description:
+        "Visibilidad logística y demo Etapa 1: actor, envío y checkpoint en Solana con sync al backend.",
 };
 
 export default function RootLayout({
-  children,
+    children,
 }: Readonly<{
-  children: React.ReactNode;
+    children: React.ReactNode;
 }>) {
-  return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
-    </html>
-  );
+    return (
+        <html lang="es" className={inter.variable}>
+            <body>
+                <SiteHeader />
+                {children}
+                <SiteFooter />
+            </body>
+        </html>
+    );
 }
