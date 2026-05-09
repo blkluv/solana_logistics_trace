@@ -51,7 +51,7 @@ fn register_actor_happy_path_writes_actor_account() {
         .expect("actor account");
     let actor = Actor::try_deserialize(&mut &acc.data[..]).expect("decode Actor");
     assert_eq!(actor.wallet, payer.pubkey());
-    assert_eq!(actor.role, ActorRole::Sender);
+    assert!(actor.role == ActorRole::Sender);
     assert_eq!(actor.name, "Test Sender");
     assert_eq!(actor.location, None);
     assert!(actor.is_active);

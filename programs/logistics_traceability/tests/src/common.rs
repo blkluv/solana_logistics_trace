@@ -1,12 +1,10 @@
 #![allow(deprecated)]
 
-use std::ops::Deref;
-
 use anchor_client::{
     solana_sdk::{
         commitment_config::CommitmentConfig,
         pubkey::Pubkey,
-        signature::{read_keypair_file, Signature, Signer},
+        signature::{read_keypair_file, Keypair, Signature},
         system_program,
     },
     Client, Cluster, Program,
@@ -15,7 +13,10 @@ use anchor_lang::AccountDeserialize;
 use base64::Engine;
 use solana_commitment_config::CommitmentConfig as RpcCommitmentConfig;
 use solana_rpc_client_api::config::RpcTransactionConfig;
-use solana_transaction_status_client_types::{OptionSerializer, UiTransactionEncoding};
+use solana_transaction_status_client_types::{
+    option_serializer::OptionSerializer,
+    UiTransactionEncoding,
+};
 
 use logistics_traceability::{
     accounts::Initialize as InitAccounts,
@@ -47,10 +48,8 @@ pub fn cfg_pda() -> Pubkey {
     Pubkey::find_program_address(&[CONFIG_SEED], &ID).0
 }
 
-pub fn initialize_if_needed<C>(program: &Program<C>)
-where
-    C: Clone + Deref<Target = impl Signer>,
-{
+/// Same payer type as `client_with_payer` → `Program<&Keypair>` (Anchor `Client` pattern).
+pub fn initialize_if_needed(program: &Program<&Keypair>) {
     let cfg = cfg_pda();
     if program.rpc().get_account(&cfg).is_err() {
         program
@@ -66,10 +65,7 @@ where
     }
 }
 
-pub fn fetch_program_config<C>(program: &Program<C>) -> ProgramConfig
-where
-    C: Clone + Deref<Target = impl Signer>,
-{
+pub fn fetch_program_config(program: &Program<&Keypair>) -> ProgramConfig {
     let pk = cfg_pda();
     let acc = program
         .rpc()
@@ -79,10 +75,7 @@ where
 }
 
 /// Parses `getTransaction` logs (includes Anchor `emit!` `Program data:` lines).
-pub fn rpc_transaction_logs<C>(program: &Program<C>, sig: &Signature) -> Vec<String>
-where
-    C: Clone + Deref<Target = impl Signer>,
-{
+pub fn rpc_transaction_logs(program: &Program<&Keypair>, sig: &Signature) -> Vec<String> {
     let config = RpcTransactionConfig {
         encoding: Some(UiTransactionEncoding::Json),
         commitment: Some(RpcCommitmentConfig::confirmed()),

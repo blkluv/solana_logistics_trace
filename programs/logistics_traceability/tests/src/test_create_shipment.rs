@@ -91,5 +91,5 @@ fn create_shipment_increments_program_config_and_sender_actor_counters() {
     assert_eq!(shipment.id, next_id);
     assert_eq!(shipment.sender, payer.pubkey());
     assert_eq!(shipment.recipient, recipient);
-    assert_eq!(shipment.status, ShipmentStatus::Created);
+    assert!(shipment.status == ShipmentStatus::Created);
 }
