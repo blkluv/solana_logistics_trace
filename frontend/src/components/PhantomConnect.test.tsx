@@ -71,7 +71,7 @@ describe("PhantomConnect", () => {
         fireEvent.click(screen.getByTestId("phantom-connect-button"));
         await waitFor(() =>
             expect(screen.getByTestId("phantom-error")).toHaveTextContent(
-                /Phantom extension not found/i,
+                /Phantom no encontrado/i,
             ),
         );
     });
