@@ -16,3 +16,13 @@ pub async fn get_actor_roles(
         .map(Json)
         .map_err(|_| Status::InternalServerError)
 }
+
+#[rocket::get("/catalogs/checkpoint-types")]
+pub async fn get_checkpoint_types(
+    pool: &State<PgPool>,
+) -> Result<Json<Vec<catalogs::CatalogItem>>, Status> {
+    catalogs::list_checkpoint_types(pool.inner())
+        .await
+        .map(Json)
+        .map_err(|_| Status::InternalServerError)
+}

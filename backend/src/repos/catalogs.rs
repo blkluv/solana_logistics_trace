@@ -45,3 +45,16 @@ pub async fn list_actor_roles(pool: &PgPool) -> Result<Vec<CatalogItem>, sqlx::E
     )
     .await
 }
+
+pub async fn list_checkpoint_types(pool: &PgPool) -> Result<Vec<CatalogItem>, sqlx::Error> {
+    fetch_catalog(
+        pool,
+        r#"
+        SELECT code, label, description, sort_order
+        FROM cat_checkpoint_type
+        WHERE is_active = true
+        ORDER BY sort_order, code
+        "#,
+    )
+    .await
+}
