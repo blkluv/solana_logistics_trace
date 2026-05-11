@@ -297,7 +297,6 @@ export function Etapa1Demo() {
             };
         }
 
-        const ac = new AbortController();
         queueMicrotask(() => {
             if (!cancel) {
                 setCatalogsLoading(true);
@@ -309,9 +308,11 @@ export function Etapa1Demo() {
                 const onUnknown = (code: string) => {
                     append(`catálogo: código «${code}» sin mapeo on-chain — omitido`);
                 };
+                // No AbortSignal here: Strict Mode runs effect cleanup before the second mount,
+                // which would abort the first fetch and show NS_BINDING_ABORTED in devtools.
                 const [actorOpts, cpOpts] = await Promise.all([
-                    loadActorRoleSelectOptions(apiBaseTrimmed, onUnknown, ac.signal),
-                    loadCheckpointSelectOptions(apiBaseTrimmed, onUnknown, ac.signal),
+                    loadActorRoleSelectOptions(apiBaseTrimmed, onUnknown),
+                    loadCheckpointSelectOptions(apiBaseTrimmed, onUnknown),
                 ]);
                 if (cancel) {
                     return;
@@ -343,7 +344,6 @@ export function Etapa1Demo() {
 
         return () => {
             cancel = true;
-            ac.abort();
         };
     }, [apiBaseTrimmed, apiBaseWellFormed, append]);
 
