@@ -33,6 +33,7 @@ pub fn build_rocket(
             "/api/v1",
             routes![
                 handlers::solana::solana_health_rpc,
+                handlers::catalogs::get_actor_roles,
                 handlers::sync::post_sync_actor,
                 handlers::sync::post_sync_shipment,
                 handlers::sync::post_sync_checkpoint,
