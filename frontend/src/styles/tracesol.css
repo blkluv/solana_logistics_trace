@@ -448,6 +448,10 @@ table.data-table {
   transition: border-color var(--transition);
 }
 
+.input.is-invalid {
+  border-color: var(--color-danger);
+}
+
 .input:focus,
 .select:focus,
 .textarea:focus {

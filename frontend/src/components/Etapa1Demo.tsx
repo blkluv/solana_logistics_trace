@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     Connection,
     PublicKey,
@@ -38,6 +38,22 @@ import { shipmentPda } from "@/lib/solana/pdas";
 import { signTransactionWithPhantom } from "@/lib/wallet/phantom";
 
 import { PhantomConnect } from "./PhantomConnect";
+
+/** Mensaje de error de campo o `null` si el valor es una PublicKey válida (no por defecto). */
+function recipientFieldValidationError(recipientTrimmed: string): string | null {
+    if (!recipientTrimmed) {
+        return "Indica la PublicKey base58 del destinatario.";
+    }
+    try {
+        const rec = new PublicKey(recipientTrimmed);
+        if (rec.equals(PublicKey.default)) {
+            return "La clave por defecto del sistema no puede usarse como destinatario.";
+        }
+        return null;
+    } catch {
+        return "PublicKey base58 inválida: debe decodificar 32 bytes (suele ser ~43–44 caracteres).";
+    }
+}
 
 async function confirmSerializedTx(
     connection: Connection,
@@ -125,6 +141,8 @@ export function Etapa1Demo() {
     const [actorLocation, setActorLocation] = useState("Madrid, ES");
 
     const [recipient, setRecipient] = useState("");
+    const [recipientIssue, setRecipientIssue] = useState<string | null>(null);
+    const recipientRef = useRef<HTMLInputElement>(null);
     const [product, setProduct] = useState("Vino Tinto");
     const [origin, setOrigin] = useState("Lisboa · Almacén A");
     const [destination, setDestination] = useState("Sevilla · Hub Sur");
@@ -387,15 +405,14 @@ export function Etapa1Demo() {
                 if (!cur) {
                     throw new Error("ProgramConfig no disponible (¿initialize?)");
                 }
-                let rec: PublicKey;
-                try {
-                    rec = new PublicKey(recipient.trim());
-                } catch {
-                    throw new Error("Destinatario no es una PublicKey válida (base58).");
+                const trimmedRec = recipient.trim();
+                const recErr = recipientFieldValidationError(trimmedRec);
+                if (recErr) {
+                    setRecipientIssue(recErr);
+                    queueMicrotask(() => recipientRef.current?.focus());
+                    throw new Error(recErr);
                 }
-                if (rec.equals(PublicKey.default)) {
-                    throw new Error("Destinatario no puede ser Pubkey por defecto.");
-                }
+                const rec = new PublicKey(trimmedRec);
                 const nextId = cur.decoded.shipmentsCreated + BigInt(1);
                 const [ship] = shipmentPda(programId, nextId);
 
@@ -758,13 +775,34 @@ export function Etapa1Demo() {
                     </p>
                     <div className="form-group">
                         <label htmlFor="rec">Destinatario (PublicKey base58)</label>
+                        <p className="text-sm text-muted mb-1" id="rec-help">
+                            Clave pública en base58 (32 bytes on-chain; longitud típica 43–44
+                            caracteres). Puede ser otra cuenta tuya en localnet.
+                        </p>
                         <input
+                            ref={recipientRef}
                             id="rec"
-                            className="input mono"
+                            className={`input mono${recipientIssue ? " is-invalid" : ""}`}
                             value={recipient}
-                            onChange={(e) => setRecipient(e.target.value)}
-                            placeholder="Pega otra wallet (puede ser la misma en localnet)"
+                            onChange={(e) => {
+                                setRecipient(e.target.value);
+                                setRecipientIssue(null);
+                            }}
+                            onBlur={() => {
+                                const t = recipient.trim();
+                                setRecipientIssue(t ? recipientFieldValidationError(t) : null);
+                            }}
+                            placeholder="Ej. otra wallet Phantom en la misma red"
+                            aria-invalid={recipientIssue ? "true" : "false"}
+                            aria-describedby="rec-help rec-err"
                         />
+                        <p
+                            id="rec-err"
+                            className={recipientIssue ? "text-sm mt-1 mb-0" : "sr-only"}
+                            role={recipientIssue ? "alert" : undefined}
+                        >
+                            {recipientIssue ?? ""}
+                        </p>
                     </div>
                     <div className="form-row">
                         <div className="form-group">
