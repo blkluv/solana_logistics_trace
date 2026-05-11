@@ -15,13 +15,18 @@ import {
     normalizeApiBaseUrl,
 } from "@/lib/api/backendConnectivity";
 import {
+    loadActorRoleSelectOptions,
+    loadCheckpointSelectOptions,
+} from "@/lib/api/catalogs";
+import {
     postActorsSync,
     postCheckpointsSync,
     postShipmentsSync,
 } from "@/lib/api/sync";
 import { getPublicConfig } from "@/lib/env";
+import type { CatalogOptionRow } from "@/lib/solana/catalogCodeMap";
 import type { ActorRoleCode, CheckpointTypeCode } from "@/lib/solana/ix";
-import { ActorRoleCode as Role } from "@/lib/solana/ix";
+import { ActorRoleCode as Role, CheckpointTypeCode as Cp } from "@/lib/solana/ix";
 import {
     createCreateShipmentIx,
     createInitializeIx,
@@ -66,22 +71,23 @@ async function confirmSerializedTx(
     return signature;
 }
 
-const ROLE_OPTIONS: { value: ActorRoleCode; label: string }[] = [
-    { value: Role.Sender, label: "Sender" },
-    { value: Role.Carrier, label: "Carrier" },
-    { value: Role.Hub, label: "Hub" },
-    { value: Role.Recipient, label: "Recipient" },
-    { value: Role.Inspector, label: "Inspector" },
+/** Coincide con seeds `cat_*` y orden Borsh del programa si la API no está disponible. */
+const FALLBACK_ACTOR_ROWS: CatalogOptionRow<ActorRoleCode>[] = [
+    { code: "Sender", label: "Sender", value: Role.Sender },
+    { code: "Carrier", label: "Carrier", value: Role.Carrier },
+    { code: "Hub", label: "Hub", value: Role.Hub },
+    { code: "Recipient", label: "Recipient", value: Role.Recipient },
+    { code: "Inspector", label: "Inspector", value: Role.Inspector },
 ];
 
-const CP_OPTIONS: { value: CheckpointTypeCode; label: string }[] = [
-    { value: 0, label: "Pickup" },
-    { value: 1, label: "HubIn" },
-    { value: 2, label: "HubOut" },
-    { value: 3, label: "Transit" },
-    { value: 4, label: "DeliveryAttempt" },
-    { value: 5, label: "Delivered" },
-    { value: 6, label: "SensorData" },
+const FALLBACK_CP_ROWS: CatalogOptionRow<CheckpointTypeCode>[] = [
+    { code: "Pickup", label: "Pickup", value: Cp.Pickup },
+    { code: "HubIn", label: "HubIn", value: Cp.HubIn },
+    { code: "HubOut", label: "HubOut", value: Cp.HubOut },
+    { code: "Transit", label: "Transit", value: Cp.Transit },
+    { code: "DeliveryAttempt", label: "DeliveryAttempt", value: Cp.DeliveryAttempt },
+    { code: "Delivered", label: "Delivered", value: Cp.Delivered },
+    { code: "SensorData", label: "SensorData", value: Cp.SensorData },
 ];
 
 export function Etapa1Demo() {
@@ -142,6 +148,14 @@ export function Etapa1Demo() {
         text: string;
     } | null>(null);
 
+    const [apiActorRows, setApiActorRows] = useState<CatalogOptionRow<ActorRoleCode>[] | null>(
+        null,
+    );
+    const [apiCpRows, setApiCpRows] = useState<CatalogOptionRow<CheckpointTypeCode>[] | null>(
+        null,
+    );
+    const [catalogsLoading, setCatalogsLoading] = useState(false);
+
     const append = useCallback((msg: string) => {
         setLogs((prev) => [
             ...prev.slice(-160),
@@ -176,6 +190,99 @@ export function Etapa1Demo() {
             cancel = true;
         };
     }, [connection, programId]);
+
+    const actorRows = apiActorRows ?? FALLBACK_ACTOR_ROWS;
+    const cpRows = apiCpRows ?? FALLBACK_CP_ROWS;
+
+    useEffect(() => {
+        const rows = apiActorRows;
+        if (!rows?.length) {
+            return;
+        }
+        queueMicrotask(() => {
+            setRole((prev) =>
+                rows.some((r) => r.value === prev) ? prev : rows[0]!.value,
+            );
+        });
+    }, [apiActorRows]);
+
+    useEffect(() => {
+        const rows = apiCpRows;
+        if (!rows?.length) {
+            return;
+        }
+        queueMicrotask(() => {
+            setCpType((prev) =>
+                rows.some((r) => r.value === prev) ? prev : rows[0]!.value,
+            );
+        });
+    }, [apiCpRows]);
+
+    useEffect(() => {
+        let cancel = false;
+        if (!apiBaseTrimmed || !apiBaseWellFormed) {
+            queueMicrotask(() => {
+                if (cancel) {
+                    return;
+                }
+                setApiActorRows(null);
+                setApiCpRows(null);
+                setCatalogsLoading(false);
+            });
+            return () => {
+                cancel = true;
+            };
+        }
+
+        const ac = new AbortController();
+        queueMicrotask(() => {
+            if (!cancel) {
+                setCatalogsLoading(true);
+            }
+        });
+
+        void (async () => {
+            try {
+                const onUnknown = (code: string) => {
+                    append(`catálogo: código «${code}» sin mapeo on-chain — omitido`);
+                };
+                const [actorOpts, cpOpts] = await Promise.all([
+                    loadActorRoleSelectOptions(apiBaseTrimmed, onUnknown, ac.signal),
+                    loadCheckpointSelectOptions(apiBaseTrimmed, onUnknown, ac.signal),
+                ]);
+                if (cancel) {
+                    return;
+                }
+                if (actorOpts.length > 0 && cpOpts.length > 0) {
+                    setApiActorRows(actorOpts);
+                    setApiCpRows(cpOpts);
+                } else {
+                    setApiActorRows(null);
+                    setApiCpRows(null);
+                    append(
+                        "Catálogos API: sin filas tras mapear a enums on-chain — usando lista local.",
+                    );
+                }
+            } catch (e) {
+                if (cancel) {
+                    return;
+                }
+                setApiActorRows(null);
+                setApiCpRows(null);
+                const m = e instanceof Error ? e.message : String(e);
+                append(`Catálogos API: ${m} — usando lista local.`);
+            } finally {
+                if (!cancel) {
+                    setCatalogsLoading(false);
+                }
+            }
+        })();
+
+        return () => {
+            cancel = true;
+            ac.abort();
+        };
+    }, [apiBaseTrimmed, apiBaseWellFormed, append]);
 
     const payer = useMemo(
         () => (wallet ? new PublicKey(wallet) : null),
@@ -539,6 +646,19 @@ export function Etapa1Demo() {
             <section className="card">
                 <div className="card__hd">2 · Registrar actor</div>
                 <div className="card__bd">
+                    {catalogsLoading ? (
+                        <p className="text-sm text-muted mb-2">Cargando catálogos desde API…</p>
+                    ) : null}
+                    {!catalogsLoading && apiBaseWellFormed && apiActorRows ? (
+                        <p className="text-sm text-muted mb-2">
+                            Rol: datos desde PostgreSQL vía API.
+                        </p>
+                    ) : null}
+                    {!catalogsLoading && (!apiBaseWellFormed || !apiActorRows) ? (
+                        <p className="text-sm text-muted mb-2">
+                            Rol: lista local (configure URL API válida o revise backend/DB).
+                        </p>
+                    ) : null}
                     <div className="form-row">
                         <div className="form-group">
                             <label htmlFor="role">Rol</label>
@@ -550,8 +670,8 @@ export function Etapa1Demo() {
                                     setRole(Number(e.target.value) as ActorRoleCode)
                                 }
                             >
-                                {ROLE_OPTIONS.map((o) => (
-                                    <option key={o.value} value={o.value}>
+                                {actorRows.map((o) => (
+                                    <option key={o.code} value={o.value}>
                                         {o.label}
                                     </option>
                                 ))}
@@ -665,6 +785,17 @@ export function Etapa1Demo() {
                         Tras crear el envío, el estado inicial es Created: usa{" "}
                         <strong>Pickup</strong> para avanzar a InTransit.
                     </p>
+                    {!catalogsLoading && apiBaseWellFormed && apiCpRows ? (
+                        <p className="text-sm text-muted mb-2">
+                            Tipo de checkpoint: datos desde PostgreSQL vía API.
+                        </p>
+                    ) : null}
+                    {!catalogsLoading && (!apiBaseWellFormed || !apiCpRows) ? (
+                        <p className="text-sm text-muted mb-2">
+                            Tipo de checkpoint: lista local (configure URL API válida o revise
+                            backend/DB).
+                        </p>
+                    ) : null}
                     <div className="form-row">
                         <div className="form-group">
                             <label htmlFor="cpt">Tipo</label>
@@ -676,8 +807,8 @@ export function Etapa1Demo() {
                                     setCpType(Number(e.target.value) as CheckpointTypeCode)
                                 }
                             >
-                                {CP_OPTIONS.map((o) => (
-                                    <option key={o.value} value={o.value}>
+                                {cpRows.map((o) => (
+                                    <option key={o.code} value={o.value}>
                                         {o.label}
                                     </option>
                                 ))}
