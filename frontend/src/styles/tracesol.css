@@ -403,6 +403,24 @@ table.data-table {
   font-size: 0.8rem;
 }
 
+/* —— Etapa 1 demo (/demo) —— */
+.etapa1-demo-flow {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.etapa1-demo-flow-ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.etapa1-step-lead {
+  line-height: 1.45;
+}
+
 /* —— Forms —— */
 .form-group {
   margin-bottom: 1rem;

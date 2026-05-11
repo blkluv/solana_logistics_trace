@@ -532,7 +532,7 @@ export function Etapa1Demo() {
     }, [backendHealthUrl, append]);
 
     return (
-        <div style={{ display: "grid", gap: "1.5rem" }}>
+        <div className="etapa1-demo-root" style={{ display: "grid", gap: "1.5rem" }}>
             <section className="card">
                 <div className="card__hd">Wallet</div>
                 <div className="card__bd">
@@ -621,10 +621,35 @@ export function Etapa1Demo() {
                 </div>
             </section>
 
-            <section className="card">
-                <div className="card__hd">1 · Initialize (una vez)</div>
+            <section className="card etapa1-demo-intro" aria-labelledby="etapa1-intro-h">
+                <div className="card__hd" id="etapa1-intro-h">
+                    Flujo de la demo (Etapa 1)
+                </div>
                 <div className="card__bd">
-                    <p className="text-sm text-muted">
+                    <p className="text-sm text-muted mb-2">
+                        Orden recomendado: transacciones on-chain y, cuando aplique, POST de sync al
+                        backend.
+                    </p>
+                    <ol className="etapa1-demo-flow-ol text-sm text-muted">
+                        <li>Inicializar el programa (una vez por despliegue en la red).</li>
+                        <li>Registrar actor y sincronizar con PostgreSQL.</li>
+                        <li>Crear envío y sincronizar.</li>
+                        <li>Registrar checkpoint y sincronizar.</li>
+                    </ol>
+                </div>
+            </section>
+
+            <div
+                className="etapa1-demo-flow"
+                role="region"
+                aria-label="Pasos on-chain y formularios Etapa 1"
+            >
+            <section className="card">
+                <div className="card__hd" id="etapa1-step-1-init">
+                    1 · Initialize (una vez)
+                </div>
+                <div className="card__bd">
+                    <p className="text-sm text-muted etapa1-step-lead" id="etapa1-step-1-desc">
                         Inicializa <code className="mono">ProgramConfig</code>. Omite si ya existe.
                     </p>
                     <button
@@ -632,6 +657,7 @@ export function Etapa1Demo() {
                         className="btn btn--primary"
                         disabled={!payer || !programId || busyKey !== null || !!prog}
                         onClick={() => void onInitialize()}
+                        aria-describedby="etapa1-step-1-desc"
                     >
                         {busyKey === "initialize" ? "Enviando…" : "Ejecutar initialize"}
                     </button>
@@ -644,7 +670,9 @@ export function Etapa1Demo() {
             </section>
 
             <section className="card">
-                <div className="card__hd">2 · Registrar actor</div>
+                <div className="card__hd" id="etapa1-step-2-actor">
+                    2 · Registrar actor
+                </div>
                 <div className="card__bd">
                     {catalogsLoading ? (
                         <p className="text-sm text-muted mb-2">Cargando catálogos desde API…</p>
@@ -659,6 +687,10 @@ export function Etapa1Demo() {
                             Rol: lista local (configure URL API válida o revise backend/DB).
                         </p>
                     ) : null}
+                    <p className="text-sm text-muted etapa1-step-lead mb-2" id="etapa1-step-2-desc">
+                        Asocia una wallet autorizada con rol y metadatos; luego se indexa en el
+                        backend con el hash de la transacción.
+                    </p>
                     <div className="form-row">
                         <div className="form-group">
                             <label htmlFor="role">Rol</label>
@@ -669,6 +701,7 @@ export function Etapa1Demo() {
                                 onChange={(e) =>
                                     setRole(Number(e.target.value) as ActorRoleCode)
                                 }
+                                aria-describedby="etapa1-step-2-desc"
                             >
                                 {actorRows.map((o) => (
                                     <option key={o.code} value={o.value}>
@@ -701,6 +734,7 @@ export function Etapa1Demo() {
                         className="btn btn--primary"
                         disabled={!payer || !programId || !prog || busyKey !== null}
                         onClick={() => void onRegisterActor()}
+                        aria-describedby="etapa1-step-2-desc"
                     >
                         {busyKey === "register_actor" ? "Enviando…" : "register_actor + sync"}
                     </button>
@@ -714,8 +748,14 @@ export function Etapa1Demo() {
             </section>
 
             <section className="card">
-                <div className="card__hd">3 · Crear envío</div>
+                <div className="card__hd" id="etapa1-step-3-ship">
+                    3 · Crear envío
+                </div>
                 <div className="card__bd">
+                    <p className="text-sm text-muted etapa1-step-lead mb-2" id="etapa1-step-3-desc">
+                        El remitente es tu wallet conectada; indica la clave pública del destinatario
+                        en base58.
+                    </p>
                     <div className="form-group">
                         <label htmlFor="rec">Destinatario (PublicKey base58)</label>
                         <input
@@ -772,6 +812,7 @@ export function Etapa1Demo() {
                         className="btn btn--primary"
                         disabled={!payer || !programId || !prog || busyKey !== null}
                         onClick={() => void onCreateShipment()}
+                        aria-describedby="etapa1-step-3-desc"
                     >
                         {busyKey === "create_shipment" ? "Enviando…" : "create_shipment + sync"}
                     </button>
@@ -779,9 +820,11 @@ export function Etapa1Demo() {
             </section>
 
             <section className="card">
-                <div className="card__hd">4 · Registrar checkpoint</div>
+                <div className="card__hd" id="etapa1-step-4-cp">
+                    4 · Registrar checkpoint
+                </div>
                 <div className="card__bd">
-                    <p className="text-sm text-muted">
+                    <p className="text-sm text-muted etapa1-step-lead" id="etapa1-step-4-desc">
                         Tras crear el envío, el estado inicial es Created: usa{" "}
                         <strong>Pickup</strong> para avanzar a InTransit.
                     </p>
@@ -806,6 +849,7 @@ export function Etapa1Demo() {
                                 onChange={(e) =>
                                     setCpType(Number(e.target.value) as CheckpointTypeCode)
                                 }
+                                aria-describedby="etapa1-step-4-desc"
                             >
                                 {cpRows.map((o) => (
                                     <option key={o.code} value={o.value}>
@@ -884,6 +928,7 @@ export function Etapa1Demo() {
                             busyKey !== null
                         }
                         onClick={() => void onRecordCheckpoint()}
+                        aria-describedby="etapa1-step-4-desc"
                     >
                         {busyKey === "record_checkpoint"
                             ? "Enviando…"
@@ -891,6 +936,7 @@ export function Etapa1Demo() {
                     </button>
                 </div>
             </section>
+            </div>
 
             <section className="card">
                 <div className="card__hd">Registro</div>
