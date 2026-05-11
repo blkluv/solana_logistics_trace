@@ -1,8 +1,8 @@
 //! Borsh layouts aligned with upcoming Anchor accounts (`Etapa 1`). PLAN §7.1.
 
-use borsh_derive::BorshDeserialize;
+use borsh_derive::{BorshDeserialize, BorshSerialize};
 
-#[derive(BorshDeserialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(BorshDeserialize, BorshSerialize, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ActorRoleSchema {
     Sender,
     Carrier,
@@ -11,7 +11,7 @@ pub enum ActorRoleSchema {
     Inspector,
 }
 
-#[derive(BorshDeserialize, Debug)]
+#[derive(BorshDeserialize, BorshSerialize, Debug)]
 pub struct ActorAccountData {
     pub wallet: [u8; 32],
     pub role: ActorRoleSchema,
@@ -23,7 +23,7 @@ pub struct ActorAccountData {
     pub created_at: i64,
 }
 
-#[derive(BorshDeserialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(BorshDeserialize, BorshSerialize, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ShipmentStatusSchema {
     Created,
     InTransit,
@@ -34,7 +34,7 @@ pub enum ShipmentStatusSchema {
     Cancelled,
 }
 
-#[derive(BorshDeserialize, Debug)]
+#[derive(BorshDeserialize, BorshSerialize, Debug)]
 pub struct ShipmentAccountData {
     pub id: u64,
     pub sender: [u8; 32],
@@ -50,7 +50,7 @@ pub struct ShipmentAccountData {
     pub date_delivered: i64,
 }
 
-#[derive(BorshDeserialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(BorshDeserialize, BorshSerialize, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CheckpointTypeSchema {
     Pickup,
     HubIn,
@@ -61,7 +61,7 @@ pub enum CheckpointTypeSchema {
     SensorData,
 }
 
-#[derive(BorshDeserialize, Debug)]
+#[derive(BorshDeserialize, BorshSerialize, Debug)]
 pub struct CheckpointAccountData {
     pub id: u64,
     pub shipment_id: u64,
