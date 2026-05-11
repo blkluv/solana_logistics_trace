@@ -548,6 +548,88 @@ export function Etapa1Demo() {
         }
     }, [backendHealthUrl, append]);
 
+    const initializeDisabledHint = useMemo(() => {
+        if (!programId) {
+            return "Configure NEXT_PUBLIC_PROGRAM_ID válido en .env.local.";
+        }
+        if (!payer) {
+            return "Conecte Phantom en la sección Wallet para firmar.";
+        }
+        if (busyKey !== null && busyKey !== "initialize") {
+            return "Espere a que termine la operación en curso.";
+        }
+        if (prog) {
+            return "ProgramConfig ya existe en esta red.";
+        }
+        return null;
+    }, [programId, payer, busyKey, prog]);
+
+    const registerActorDisabledHint = useMemo(() => {
+        if (!programId) {
+            return "Configure NEXT_PUBLIC_PROGRAM_ID válido.";
+        }
+        if (!payer) {
+            return "Conecte Phantom para firmar.";
+        }
+        if (!prog) {
+            return "Ejecute initialize y espere a cargar ProgramConfig.";
+        }
+        if (busyKey !== null && busyKey !== "register_actor") {
+            return "Espere a que termine la operación en curso.";
+        }
+        return null;
+    }, [programId, payer, prog, busyKey]);
+
+    const createShipmentDisabledHint = useMemo(() => {
+        if (!programId) {
+            return "Configure NEXT_PUBLIC_PROGRAM_ID válido.";
+        }
+        if (!payer) {
+            return "Conecte Phantom para firmar.";
+        }
+        if (!prog) {
+            return "Ejecute initialize y espere a cargar ProgramConfig.";
+        }
+        if (recipientFieldValidationError(recipient.trim())) {
+            return "Revise el destinatario: PublicKey base58 válida.";
+        }
+        if (busyKey !== null && busyKey !== "create_shipment") {
+            return "Espere a que termine la operación en curso.";
+        }
+        return null;
+    }, [programId, payer, prog, busyKey, recipient]);
+
+    const recordCheckpointDisabledHint = useMemo(() => {
+        if (!programId) {
+            return "Configure NEXT_PUBLIC_PROGRAM_ID válido.";
+        }
+        if (!payer) {
+            return "Conecte Phantom para firmar.";
+        }
+        if (!prog) {
+            return "Ejecute initialize y espere a cargar ProgramConfig.";
+        }
+        if (!shipmentAccount) {
+            return "Cree un envío en el paso 3 para tener la cuenta PDA.";
+        }
+        if (busyKey !== null && busyKey !== "record_checkpoint") {
+            return "Espere a que termine la operación en curso.";
+        }
+        return null;
+    }, [programId, payer, prog, shipmentAccount, busyKey]);
+
+    const initDisabled =
+        !payer || !programId || busyKey !== null || !!prog;
+    const registerDisabled = !payer || !programId || !prog || busyKey !== null;
+    const shipmentDisabled =
+        !payer ||
+        !programId ||
+        !prog ||
+        busyKey !== null ||
+        recipientFieldValidationError(recipient.trim()) !== null;
+    const checkpointDisabled =
+        !payer || !programId || !prog || !shipmentAccount || busyKey !== null;
+
     return (
         <div className="etapa1-demo-root" style={{ display: "grid", gap: "1.5rem" }}>
             <section className="card">
@@ -671,13 +753,19 @@ export function Etapa1Demo() {
                     </p>
                     <button
                         type="button"
-                        className="btn btn--primary"
-                        disabled={!payer || !programId || busyKey !== null || !!prog}
+                        className={`btn btn--primary${busyKey === "initialize" ? " is-busy" : ""}`}
+                        disabled={initDisabled}
                         onClick={() => void onInitialize()}
                         aria-describedby="etapa1-step-1-desc"
+                        aria-busy={busyKey === "initialize"}
                     >
                         {busyKey === "initialize" ? "Enviando…" : "Ejecutar initialize"}
                     </button>
+                    {initDisabled && initializeDisabledHint ? (
+                        <p className="form-action-hint text-sm text-muted mt-2 mb-0">
+                            {initializeDisabledHint}
+                        </p>
+                    ) : null}
                     {prog ? (
                         <p className="text-sm text-muted mt-2 mb-0">
                             ProgramConfig ya existe en esta red — no vuelvas a ejecutar initialize.
@@ -748,17 +836,17 @@ export function Etapa1Demo() {
                     </div>
                     <button
                         type="button"
-                        className="btn btn--primary"
-                        disabled={!payer || !programId || !prog || busyKey !== null}
+                        className={`btn btn--primary${busyKey === "register_actor" ? " is-busy" : ""}`}
+                        disabled={registerDisabled}
                         onClick={() => void onRegisterActor()}
                         aria-describedby="etapa1-step-2-desc"
+                        aria-busy={busyKey === "register_actor"}
                     >
                         {busyKey === "register_actor" ? "Enviando…" : "register_actor + sync"}
                     </button>
-                    {!prog && programId && payer ? (
-                        <p className="text-sm text-muted mt-2 mb-0">
-                            Completa initialize y espera a que cargue ProgramConfig antes de registrar
-                            actor.
+                    {registerDisabled && registerActorDisabledHint ? (
+                        <p className="form-action-hint text-sm text-muted mt-2 mb-0">
+                            {registerActorDisabledHint}
                         </p>
                     ) : null}
                 </div>
@@ -847,13 +935,19 @@ export function Etapa1Demo() {
                     </div>
                     <button
                         type="button"
-                        className="btn btn--primary"
-                        disabled={!payer || !programId || !prog || busyKey !== null}
+                        className={`btn btn--primary${busyKey === "create_shipment" ? " is-busy" : ""}`}
+                        disabled={shipmentDisabled}
                         onClick={() => void onCreateShipment()}
                         aria-describedby="etapa1-step-3-desc"
+                        aria-busy={busyKey === "create_shipment"}
                     >
                         {busyKey === "create_shipment" ? "Enviando…" : "create_shipment + sync"}
                     </button>
+                    {shipmentDisabled && createShipmentDisabledHint ? (
+                        <p className="form-action-hint text-sm text-muted mt-2 mb-0">
+                            {createShipmentDisabledHint}
+                        </p>
+                    ) : null}
                 </div>
             </section>
 
@@ -957,21 +1051,21 @@ export function Etapa1Demo() {
                     </div>
                     <button
                         type="button"
-                        className="btn btn--primary"
-                        disabled={
-                            !payer ||
-                            !programId ||
-                            !prog ||
-                            !shipmentAccount ||
-                            busyKey !== null
-                        }
+                        className={`btn btn--primary${busyKey === "record_checkpoint" ? " is-busy" : ""}`}
+                        disabled={checkpointDisabled}
                         onClick={() => void onRecordCheckpoint()}
                         aria-describedby="etapa1-step-4-desc"
+                        aria-busy={busyKey === "record_checkpoint"}
                     >
                         {busyKey === "record_checkpoint"
                             ? "Enviando…"
                             : "record_checkpoint + sync"}
                     </button>
+                    {checkpointDisabled && recordCheckpointDisabledHint ? (
+                        <p className="form-action-hint text-sm text-muted mt-2 mb-0">
+                            {recordCheckpointDisabledHint}
+                        </p>
+                    ) : null}
                 </div>
             </section>
             </div>

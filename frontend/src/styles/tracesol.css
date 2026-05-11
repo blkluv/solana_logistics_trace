@@ -272,6 +272,17 @@ img {
   width: 100%;
 }
 
+.btn.is-busy {
+  cursor: wait;
+  opacity: 0.88;
+  pointer-events: none;
+}
+
+.form-action-hint {
+  line-height: 1.4;
+  max-width: 42rem;
+}
+
 /* —— Cards —— */
 .card {
   background: var(--color-bg-card);
