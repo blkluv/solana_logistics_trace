@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 const NAV = [
     { href: "/", label: "Inicio" },
@@ -18,6 +18,19 @@ function navClass(active: boolean): string {
 export function SiteHeader() {
     const pathname = usePathname();
     const [menuOpen, setMenuOpen] = useState(false);
+    const [navReady, setNavReady] = useState(false);
+
+    useEffect(() => {
+        let alive = true;
+        queueMicrotask(() => {
+            if (alive) {
+                setNavReady(true);
+            }
+        });
+        return () => {
+            alive = false;
+        };
+    }, []);
 
     const closeMenu = useCallback(() => setMenuOpen(false), []);
 
@@ -36,7 +49,7 @@ export function SiteHeader() {
                             <Link
                                 key={href}
                                 href={href}
-                                className={navClass(pathname === href)}
+                                className={navClass(navReady && pathname === href)}
                             >
                                 {label}
                             </Link>
@@ -78,7 +91,7 @@ export function SiteHeader() {
                         <Link
                             key={href}
                             href={href}
-                            className={navClass(pathname === href)}
+                            className={navClass(navReady && pathname === href)}
                             onClick={closeMenu}
                         >
                             {label}

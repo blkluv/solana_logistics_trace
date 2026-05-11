@@ -45,7 +45,9 @@ export function SiteFooter() {
                     </div>
                 </div>
                 <div className="footer-bottom">
-                    <span>© {new Date().getFullYear()} TraceSol Logistics · TMF</span>
+                    <span suppressHydrationWarning>
+                        © {new Date().getFullYear()} TraceSol Logistics · TMF
+                    </span>
                     <span>Maqueta de diseño · TMF-Docs/tracesol-preview</span>
                 </div>
             </div>

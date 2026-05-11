@@ -24,8 +24,8 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="es" className={inter.variable}>
-            <body>
+        <html lang="es" className={inter.variable} suppressHydrationWarning>
+            <body suppressHydrationWarning>
                 <SiteHeader />
                 {children}
                 <SiteFooter />
