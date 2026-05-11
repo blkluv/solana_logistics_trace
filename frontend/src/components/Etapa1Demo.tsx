@@ -9,6 +9,12 @@ import {
 } from "@solana/web3.js";
 
 import {
+    apiBaseHasV1Prefix,
+    fetchBackendHealth,
+    healthCheckUrlFromApiBase,
+    normalizeApiBaseUrl,
+} from "@/lib/api/backendConnectivity";
+import {
     postActorsSync,
     postCheckpointsSync,
     postShipmentsSync,
@@ -81,6 +87,20 @@ const CP_OPTIONS: { value: CheckpointTypeCode; label: string }[] = [
 export function Etapa1Demo() {
     const cfg = useMemo(() => getPublicConfig(), []);
     const programId = cfg.programPublicKey;
+    const apiBaseTrimmed = useMemo(
+        () => normalizeApiBaseUrl(cfg.apiBaseUrl ?? ""),
+        [cfg.apiBaseUrl],
+    );
+    const backendHealthUrl = useMemo(
+        () => healthCheckUrlFromApiBase(apiBaseTrimmed),
+        [apiBaseTrimmed],
+    );
+    const apiBaseWellFormed = useMemo(
+        () =>
+            apiBaseTrimmed !== "" &&
+            apiBaseHasV1Prefix(apiBaseTrimmed),
+        [apiBaseTrimmed],
+    );
 
     const connection = useMemo(
         () => new Connection(cfg.rpcUrl, "confirmed"),
@@ -115,6 +135,12 @@ export function Etapa1Demo() {
     const [shipmentAccount, setShipmentAccount] = useState<PublicKey | null>(
         null,
     );
+
+    const [healthProbeBusy, setHealthProbeBusy] = useState(false);
+    const [healthProbeResult, setHealthProbeResult] = useState<{
+        ok: boolean;
+        text: string;
+    } | null>(null);
 
     const append = useCallback((msg: string) => {
         setLogs((prev) => [
@@ -367,12 +393,96 @@ export function Etapa1Demo() {
           ? "ProgramConfig no leído o programa sin initialize"
           : "Configure NEXT_PUBLIC_PROGRAM_ID válido";
 
+    const onProbeBackendHealth = useCallback(async () => {
+        if (!backendHealthUrl) {
+            setHealthProbeResult({
+                ok: false,
+                text: "Configura NEXT_PUBLIC_API_BASE_URL (p. ej. http://localhost:8000/api/v1) para probar el servidor.",
+            });
+            return;
+        }
+        setHealthProbeBusy(true);
+        setHealthProbeResult(null);
+        const ac = new AbortController();
+        const t = window.setTimeout(() => ac.abort(), 12_000);
+        try {
+            const r = await fetchBackendHealth(backendHealthUrl, ac.signal);
+            if (r.ok) {
+                const db =
+                    r.database !== undefined ? ` · base de datos: ${r.database}` : "";
+                const text = `GET /health → HTTP ${r.status} OK${db}`;
+                setHealthProbeResult({ ok: true, text });
+                append(`backend health · HTTP ${r.status} OK${db}`);
+            } else {
+                const text = `Fallo (${r.status || "sin respuesta"}): ${r.hint}`;
+                setHealthProbeResult({ ok: false, text });
+                append(`backend health · ERROR: ${text}`);
+            }
+        } finally {
+            window.clearTimeout(t);
+            setHealthProbeBusy(false);
+        }
+    }, [backendHealthUrl, append]);
+
     return (
         <div style={{ display: "grid", gap: "1.5rem" }}>
             <section className="card">
                 <div className="card__hd">Wallet</div>
                 <div className="card__bd">
                     <PhantomConnect onPublicKeyChange={setWallet} />
+                </div>
+            </section>
+
+            <section className="card">
+                <div className="card__hd">Conectividad · backend Etapa 1</div>
+                <div className="card__bd">
+                    {!apiBaseTrimmed ? (
+                        <p className="badge badge--danger mb-2">
+                            Sync HTTP desactivado:{" "}
+                            <code className="mono">NEXT_PUBLIC_API_BASE_URL</code> está vacío. Las tx
+                            on-chain pueden funcionar pero no se replicarán a PostgreSQL (POST
+                            …/sync).
+                        </p>
+                    ) : null}
+
+                    <p className="text-sm text-muted mb-1">
+                        <code className="mono">NEXT_PUBLIC_API_BASE_URL</code>
+                    </p>
+                    <p className="mono text-sm mb-2 break-all">
+                        {apiBaseTrimmed || "(no configurado)"}
+                    </p>
+
+                    {apiBaseTrimmed !== "" && !apiBaseWellFormed ? (
+                        <p className="badge badge--warn mb-2">
+                            La URL conviene terminar en <code className="mono">/api/v1</code> (sin
+                            barra final): el cliente pega{" "}
+                            <code className="mono">actors/sync</code> detrás de este valor.
+                        </p>
+                    ) : null}
+
+                    <p className="text-sm text-muted mb-1">Ping diagnóstico (raíz del backend)</p>
+                    <p className="mono text-sm mb-3 break-all">
+                        {backendHealthUrl
+                            ? `GET ${backendHealthUrl}`
+                            : "— (defina NEXT_PUBLIC_API_BASE_URL)"}
+                    </p>
+
+                    <button
+                        type="button"
+                        className="btn btn--ghost btn--sm"
+                        disabled={!backendHealthUrl || healthProbeBusy}
+                        onClick={() => void onProbeBackendHealth()}
+                    >
+                        {healthProbeBusy ? "Probando…" : "Probar backend"}
+                    </button>
+
+                    {healthProbeResult ? (
+                        <p
+                            className={`text-sm mt-2 mb-0 badge ${healthProbeResult.ok ? "badge--success" : "badge--danger"}`}
+                        >
+                            {healthProbeResult.text}
+                        </p>
+                    ) : null}
                 </div>
             </section>
 
