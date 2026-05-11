@@ -34,12 +34,54 @@ import {
     createRegisterActorIx,
 } from "@/lib/solana/instructions";
 import { fetchProgramConfig } from "@/lib/solana/program_config";
-import { shipmentPda } from "@/lib/solana/pdas";
+import { actorPda, shipmentPda } from "@/lib/solana/pdas";
 import { signTransactionWithPhantom } from "@/lib/wallet/phantom";
 
 import { PhantomConnect } from "./PhantomConnect";
 
 /** Mensaje de error de campo o `null` si el valor es una PublicKey válida (no por defecto). */
+type PostChainVerifyRegisterActor = {
+    type: "register_actor";
+    actorsCountBefore: bigint;
+    authority: PublicKey;
+};
+
+async function logRegisterActorOnChainFollowUp(
+    connection: Connection,
+    programId: PublicKey,
+    verify: PostChainVerifyRegisterActor,
+    append: (msg: string) => void,
+): Promise<void> {
+    const fresh = await fetchProgramConfig(connection, programId);
+    if (!fresh) {
+        append("register_actor · aviso: no se pudo releer ProgramConfig tras la tx.");
+        return;
+    }
+    const after = fresh.decoded.actorsRegistered;
+    const before = verify.actorsCountBefore;
+    if (after > before) {
+        append(
+            `register_actor · on-chain: actorsRegistered=${after} (antes ${before}; +${after - before}).`,
+        );
+    } else {
+        append(
+            `register_actor · on-chain: actorsRegistered=${after} (sin cambio respecto a ${before}). Si esperaba un alta nueva, revise la transacción en un explorer.`,
+        );
+    }
+
+    const [pda] = actorPda(programId, verify.authority);
+    const acc = await connection.getAccountInfo(pda, "confirmed");
+    if (acc?.data?.length) {
+        append(
+            `register_actor · cuenta Actor PDA: ${pda.toBase58()} (${acc.data.length} bytes).`,
+        );
+    } else {
+        append(
+            `register_actor · aviso: la PDA Actor ${pda.toBase58()} no tiene datos tras la tx (¿instrucción fallida o cuenta no creada?).`,
+        );
+    }
+}
+
 function recipientFieldValidationError(recipientTrimmed: string): string | null {
     if (!recipientTrimmed) {
         return "Indica la PublicKey base58 del destinatario.";
@@ -321,6 +363,7 @@ export function Etapa1Demo() {
             key: string,
             action: () => Promise<string>,
             sync: (sig: string) => Promise<void>,
+            postVerify?: PostChainVerifyRegisterActor,
         ) => {
             if (!programId) {
                 append("Ejecuta este paso después de configurar NEXT_PUBLIC_PROGRAM_ID válido.");
@@ -336,6 +379,14 @@ export function Etapa1Demo() {
                 append(`${key} · tx ${sig}`);
                 await sync(sig);
                 await refreshConfig();
+                if (postVerify?.type === "register_actor") {
+                    await logRegisterActorOnChainFollowUp(
+                        connection,
+                        programId,
+                        postVerify,
+                        append,
+                    );
+                }
             } catch (e) {
                 const m = e instanceof Error ? e.message : String(e);
                 append(`${key} · ERROR: ${m}`);
@@ -343,7 +394,7 @@ export function Etapa1Demo() {
                 setBusyKey(null);
             }
         },
-        [payer, programId, refreshConfig, append],
+        [connection, payer, programId, refreshConfig, append],
     );
 
     const onInitialize = () =>
@@ -393,6 +444,13 @@ export function Etapa1Demo() {
                     return { ok: r.ok, status: r.status };
                 });
             },
+            prog && payer
+                ? {
+                      type: "register_actor",
+                      actorsCountBefore: prog.decoded.actorsRegistered,
+                      authority: payer,
+                  }
+                : undefined,
         );
 
     const onCreateShipment = () =>
@@ -795,7 +853,9 @@ export function Etapa1Demo() {
                     ) : null}
                     <p className="text-sm text-muted etapa1-step-lead mb-2" id="etapa1-step-2-desc">
                         Asocia una wallet autorizada con rol y metadatos; luego se indexa en el
-                        backend con el hash de la transacción.
+                        backend con el hash de la transacción. Tras firmar, el registro inferior
+                        mostrará si subió <code className="mono">actorsRegistered</code> y si existe
+                        la cuenta PDA Actor on-chain.
                     </p>
                     <div className="form-row">
                         <div className="form-group">
