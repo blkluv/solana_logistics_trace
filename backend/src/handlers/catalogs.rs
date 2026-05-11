@@ -36,3 +36,13 @@ pub async fn get_shipment_statuses(
         .map(Json)
         .map_err(|_| Status::InternalServerError)
 }
+
+#[rocket::get("/catalogs/incident-types")]
+pub async fn get_incident_types(
+    pool: &State<PgPool>,
+) -> Result<Json<Vec<catalogs::CatalogItem>>, Status> {
+    catalogs::list_incident_types(pool.inner())
+        .await
+        .map(Json)
+        .map_err(|_| Status::InternalServerError)
+}
