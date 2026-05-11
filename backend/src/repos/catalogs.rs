@@ -58,3 +58,16 @@ pub async fn list_checkpoint_types(pool: &PgPool) -> Result<Vec<CatalogItem>, sq
     )
     .await
 }
+
+pub async fn list_shipment_statuses(pool: &PgPool) -> Result<Vec<CatalogItem>, sqlx::Error> {
+    fetch_catalog(
+        pool,
+        r#"
+        SELECT code, label, description, sort_order
+        FROM cat_shipment_status
+        WHERE is_active = true
+        ORDER BY sort_order, code
+        "#,
+    )
+    .await
+}
