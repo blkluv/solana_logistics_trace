@@ -23,6 +23,17 @@ cargo run
 
 Por defecto escucha en el puerto definido por `BACKEND_PORT` (8000). Rutas sync bajo **`/api/v1`** (p. ej. `POST /api/v1/actors/sync`). Health: **`GET /health`** en la raíz del servidor (`http://localhost:8000/health`).
 
+### Catálogos (solo lectura, Etapa 1)
+
+JSON: arreglo de `{ code, label, description, sort_order }` (`sort_order` es entero; filas con `is_active = false` no se listan).
+
+| Método | Ruta |
+|--------|------|
+| `GET` | `/api/v1/catalogs/actor-roles` |
+| `GET` | `/api/v1/catalogs/checkpoint-types` |
+| `GET` | `/api/v1/catalogs/shipment-statuses` |
+| `GET` | `/api/v1/catalogs/incident-types` |
+
 ## Referencia global de entorno
 
 En la raíz del monorepo existe `.env.example` con todas las variables (app + front + back + Solana) para copiar a un único `.env` si tu flujo lo usa así.
