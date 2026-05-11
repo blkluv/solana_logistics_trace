@@ -32,6 +32,33 @@ export function SiteHeader() {
         };
     }, []);
 
+    useEffect(() => {
+        let alive = true;
+        queueMicrotask(() => {
+            if (alive) {
+                setMenuOpen(false);
+            }
+        });
+        return () => {
+            alive = false;
+        };
+    }, [pathname]);
+
+    useEffect(() => {
+        if (typeof window === "undefined") {
+            return undefined;
+        }
+        const mq = window.matchMedia("(min-width: 900px)");
+        const closeOnDesktop = () => {
+            if (mq.matches) {
+                setMenuOpen(false);
+            }
+        };
+        closeOnDesktop();
+        mq.addEventListener("change", closeOnDesktop);
+        return () => mq.removeEventListener("change", closeOnDesktop);
+    }, []);
+
     const closeMenu = useCallback(() => setMenuOpen(false), []);
 
     return (

@@ -170,7 +170,12 @@ export function Etapa1Demo() {
             action: () => Promise<string>,
             sync: (sig: string) => Promise<void>,
         ) => {
-            if (!payer || !programId) {
+            if (!programId) {
+                append("Ejecuta este paso después de configurar NEXT_PUBLIC_PROGRAM_ID válido.");
+                return;
+            }
+            if (!payer) {
+                append("Conecta Phantom (arriba en esta página) para firmar la transacción.");
                 return;
             }
             setBusyKey(key);
@@ -413,6 +418,11 @@ export function Etapa1Demo() {
                     >
                         {busyKey === "initialize" ? "Enviando…" : "Ejecutar initialize"}
                     </button>
+                    {prog ? (
+                        <p className="text-sm text-muted mt-2 mb-0">
+                            ProgramConfig ya existe en esta red — no vuelvas a ejecutar initialize.
+                        </p>
+                    ) : null}
                 </div>
             </section>
 
@@ -464,6 +474,12 @@ export function Etapa1Demo() {
                     >
                         {busyKey === "register_actor" ? "Enviando…" : "register_actor + sync"}
                     </button>
+                    {!prog && programId && payer ? (
+                        <p className="text-sm text-muted mt-2 mb-0">
+                            Completa initialize y espera a que cargue ProgramConfig antes de registrar
+                            actor.
+                        </p>
+                    ) : null}
                 </div>
             </section>
 

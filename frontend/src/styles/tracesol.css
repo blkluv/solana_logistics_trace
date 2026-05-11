@@ -181,6 +181,16 @@ img {
   display: block;
 }
 
+/* En escritorio el menú hamburguesa se oculta; si React dejara is-open=true, el overlay bloqueaba
+   toda la página y los botones de la demo parecían no responder. */
+@media (min-width: 900px) {
+  .mobile-nav,
+  .mobile-nav.is-open {
+    display: none !important;
+    pointer-events: none;
+  }
+}
+
 .mobile-nav__panel {
   background: var(--color-bg-card);
   border-radius: var(--radius-md);
