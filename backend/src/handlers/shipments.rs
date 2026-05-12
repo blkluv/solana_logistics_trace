@@ -13,14 +13,14 @@ use crate::dto::shipment_api::{
 };
 use crate::repos::checkpoints;
 use crate::repos::shipments;
-use crate::wallet_query::require_wallet_query;
+use crate::wallet_query::{require_wallet_form, WalletQuery};
 
-#[rocket::get("/shipments?<wallet>")]
+#[rocket::get("/shipments?<q..>")]
 pub async fn list_shipments(
     pool: &State<PgPool>,
-    wallet: Option<&str>,
+    q: WalletQuery<'_>,
 ) -> Result<Json<Vec<ShipmentListItemJson>>, (Status, Json<Value>)> {
-    let w = require_wallet_query(wallet)?;
+    let w = require_wallet_form(&q)?;
     let rows = shipments::list_shipments_for_wallet(pool.inner(), w)
         .await
         .map_err(|_| {
@@ -36,13 +36,13 @@ pub async fn list_shipments(
     ))
 }
 
-#[rocket::get("/shipments/<shipment_id>/checkpoints?<wallet>")]
+#[rocket::get("/shipments/<shipment_id>/checkpoints?<q..>")]
 pub async fn list_shipment_checkpoints(
     pool: &State<PgPool>,
     shipment_id: Uuid,
-    wallet: Option<&str>,
+    q: WalletQuery<'_>,
 ) -> Result<Json<Vec<CheckpointItemJson>>, (Status, Json<Value>)> {
-    let w = require_wallet_query(wallet)?;
+    let w = require_wallet_form(&q)?;
     if shipments::select_shipment_detail_for_participant(pool.inner(), shipment_id, w)
         .await
         .map_err(|_| {
@@ -73,13 +73,13 @@ pub async fn list_shipment_checkpoints(
     ))
 }
 
-#[rocket::get("/shipments/<shipment_id>?<wallet>")]
+#[rocket::get("/shipments/<shipment_id>?<q..>")]
 pub async fn get_shipment(
     pool: &State<PgPool>,
     shipment_id: Uuid,
-    wallet: Option<&str>,
+    q: WalletQuery<'_>,
 ) -> Result<Json<ShipmentDetailJson>, (Status, Json<Value>)> {
-    let w = require_wallet_query(wallet)?;
+    let w = require_wallet_form(&q)?;
     let row = shipments::select_shipment_detail_for_participant(pool.inner(), shipment_id, w)
         .await
         .map_err(|_| {

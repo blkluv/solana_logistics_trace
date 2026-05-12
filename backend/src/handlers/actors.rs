@@ -8,7 +8,7 @@ use serde_json::{json, Value};
 use sqlx::PgPool;
 
 use crate::repos::actors;
-use crate::wallet_query::require_wallet_query;
+use crate::wallet_query::{require_wallet_form, WalletQuery};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -20,12 +20,12 @@ pub struct ActorMeJson {
     pub registration_tx_hash: String,
 }
 
-#[rocket::get("/actors/me?<wallet>")]
+#[rocket::get("/actors/me?<q..>")]
 pub async fn get_actor_me(
     pool: &State<PgPool>,
-    wallet: Option<&str>,
+    q: WalletQuery<'_>,
 ) -> Result<Json<ActorMeJson>, (Status, Json<Value>)> {
-    let w = require_wallet_query(wallet)?;
+    let w = require_wallet_form(&q)?;
     let row = actors::select_actor_optional(pool.inner(), w)
         .await
         .map_err(|_| {
