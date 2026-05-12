@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
@@ -8,6 +9,18 @@ import { CheckpointTimeline } from "@/components/panel/CheckpointTimeline";
 import { PhantomConnect } from "@/components/PhantomConnect";
 import { getShipmentDetail, type ShipmentDetail } from "@/lib/api/shipments";
 import { getPublicConfig } from "@/lib/env";
+
+const MapViewLazy = dynamic(
+    () => import("@/components/panel/MapView").then((m) => ({ default: m.MapView })),
+    {
+        ssr: false,
+        loading: () => (
+            <div className="panel-etapa2-map-skeleton text-sm text-muted" data-testid="map-skeleton">
+                Cargando mapa…
+            </div>
+        ),
+    },
+);
 
 export default function ShipmentDetailPage() {
     const params = useParams();
@@ -110,9 +123,7 @@ export default function ShipmentDetailPage() {
                             <div className="card">
                                 <div className="card__hd">Mapa</div>
                                 <div className="card__bd">
-                                    <div className="placeholder-map text-sm text-muted">
-                                        Mapa en carga diferida (Etapa 2 siguiente commit).
-                                    </div>
+                                    <MapViewLazy checkpoints={detail.checkpoints} />
                                 </div>
                             </div>
                         </div>
