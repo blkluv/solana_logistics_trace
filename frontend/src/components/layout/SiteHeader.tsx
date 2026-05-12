@@ -142,75 +142,77 @@ export function SiteHeader() {
                     <nav className="nav-main" aria-label="Principal">
                         {NAV_SPECS.map(renderNavLink)}
                     </nav>
-                    <div className="header-wallet" aria-label="Wallet">
-                        {connectError ? (
-                            <p
-                                className="header-wallet__error"
-                                role="alert"
-                                data-testid="header-wallet-error"
-                            >
-                                {connectError}
-                            </p>
-                        ) : null}
-                        {wallet ? (
-                            <div className="header-wallet__connected">
-                                <span
-                                    className="header-wallet__pk mono"
-                                    title={wallet}
-                                    data-testid="header-wallet-pk"
+                    <div className="header-inner__end">
+                        <div className="header-wallet" aria-label="Wallet">
+                            {connectError ? (
+                                <p
+                                    className="header-wallet__error"
+                                    role="alert"
+                                    data-testid="header-wallet-error"
                                 >
-                                    {shortPubkey(wallet)}
-                                </span>
-                                {actorLoading ? (
-                                    <span className="header-wallet__role text-muted text-xs">
-                                        Rol…
-                                    </span>
-                                ) : role ? (
+                                    {connectError}
+                                </p>
+                            ) : null}
+                            {wallet ? (
+                                <div className="header-wallet__connected">
                                     <span
-                                        className="header-wallet__role badge badge--neutral"
-                                        data-testid="header-wallet-role"
+                                        className="header-wallet__pk mono"
+                                        title={wallet}
+                                        data-testid="header-wallet-pk"
                                     >
-                                        {role}
+                                        {shortPubkey(wallet)}
                                     </span>
-                                ) : (
-                                    <span
-                                        className="header-wallet__role text-muted text-xs"
-                                        title="Wallet sin actor registrado en backend"
+                                    {actorLoading ? (
+                                        <span className="header-wallet__role text-muted text-xs">
+                                            Rol…
+                                        </span>
+                                    ) : role ? (
+                                        <span
+                                            className="header-wallet__role badge badge--neutral"
+                                            data-testid="header-wallet-role"
+                                        >
+                                            {role}
+                                        </span>
+                                    ) : (
+                                        <span
+                                            className="header-wallet__role text-muted text-xs"
+                                            title="Wallet sin actor registrado en backend"
+                                        >
+                                            Sin registro
+                                        </span>
+                                    )}
+                                    <button
+                                        type="button"
+                                        className="btn btn--ghost btn--sm"
+                                        data-testid="header-wallet-disconnect"
+                                        onClick={() => void disconnect()}
                                     >
-                                        Sin registro
-                                    </span>
-                                )}
+                                        Desconectar
+                                    </button>
+                                </div>
+                            ) : (
                                 <button
                                     type="button"
-                                    className="btn btn--ghost btn--sm"
-                                    data-testid="header-wallet-disconnect"
-                                    onClick={() => void disconnect()}
+                                    className="btn btn--primary btn--sm"
+                                    data-testid="header-wallet-connect"
+                                    onClick={() => void connect()}
                                 >
-                                    Desconectar
+                                    Conectar wallet
                                 </button>
-                            </div>
-                        ) : (
+                            )}
+                        </div>
+                        <div className="nav-actions">
                             <button
                                 type="button"
-                                className="btn btn--primary btn--sm"
-                                data-testid="header-wallet-connect"
-                                onClick={() => void connect()}
+                                className="mobile-toggle"
+                                aria-expanded={menuOpen}
+                                aria-controls="mobile-menu"
+                                aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+                                onClick={() => setMenuOpen((o) => !o)}
                             >
-                                Conectar wallet
+                                ☰
                             </button>
-                        )}
-                    </div>
-                    <div className="nav-actions">
-                        <button
-                            type="button"
-                            className="mobile-toggle"
-                            aria-expanded={menuOpen}
-                            aria-controls="mobile-menu"
-                            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-                            onClick={() => setMenuOpen((o) => !o)}
-                        >
-                            ☰
-                        </button>
+                        </div>
                     </div>
                 </div>
             </header>

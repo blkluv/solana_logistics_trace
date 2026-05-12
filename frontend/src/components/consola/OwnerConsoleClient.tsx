@@ -75,7 +75,7 @@ export function OwnerConsoleClient() {
     }, [apiBaseUrl, origin]);
 
     return (
-        <div style={{ display: "grid", gap: "1.25rem", maxWidth: "48rem" }}>
+        <div className="owner-console-grid" aria-label="Estado del sistema">
             <section className="card" aria-label="Backend">
                 <div className="card__hd">Backend</div>
                 <div className="card__bd text-sm space-y-2">

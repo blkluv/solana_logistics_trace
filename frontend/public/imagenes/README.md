@@ -2,6 +2,8 @@
 
 Coloca aquí recursos estáticos que alimenten la UI (sin import desde bundler: rutas absolutas `/imagenes/...`).
 
+**Referencia de maquetación:** `TMF-Docs/tracesol-preview/` (HTML + `css/styles.css`) y `tracesol-preview/assets/img/README.txt` para dimensiones sugeridas de capturas.
+
 | Archivo (sugerido) | Uso |
 |--------------------|-----|
 | `timeline-spine.svg` | Línea guía opcional del rail de etapas (envíos). |
