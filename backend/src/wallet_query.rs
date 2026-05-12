@@ -1,8 +1,19 @@
 //! Shared `wallet` query parsing for Etapa 2 GET endpoints (§8.2).
 
+use rocket::form::FromForm;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use serde_json::{json, Value};
+
+/// Parsed `wallet` query field for `?<q..>` handlers (avoids `?<wallet>` path quirks).
+#[derive(FromForm)]
+pub struct WalletQuery<'r> {
+    pub wallet: Option<&'r str>,
+}
+
+pub fn require_wallet_form<'a>(q: &'a WalletQuery<'a>) -> Result<&'a str, (Status, Json<Value>)> {
+    require_wallet_query(q.wallet)
+}
 
 pub fn require_wallet_query(wallet: Option<&str>) -> Result<&str, (Status, Json<Value>)> {
     let w = wallet
