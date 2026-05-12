@@ -1,6 +1,102 @@
 use chrono::{DateTime, Utc};
-use sqlx::{PgPool, Row};
+use sqlx::postgres::PgRow;
+use sqlx::{Error as SqlxError, FromRow, PgPool, Row};
 use uuid::Uuid;
+
+/// Row for `GET /shipments?wallet=` list responses.
+#[derive(Debug)]
+pub struct ShipmentListRow {
+    pub id: Uuid,
+    pub on_chain_shipment_id: i64,
+    pub status: String,
+    pub product: String,
+    pub created_at: DateTime<Utc>,
+    pub requires_cold_chain: bool,
+}
+
+impl<'r> FromRow<'r, PgRow> for ShipmentListRow {
+    fn from_row(row: &'r PgRow) -> Result<Self, SqlxError> {
+        Ok(ShipmentListRow {
+            id: row.try_get("id")?,
+            on_chain_shipment_id: row.try_get("on_chain_shipment_id")?,
+            status: row.try_get("status")?,
+            product: row.try_get("product")?,
+            created_at: row.try_get("created_at")?,
+            requires_cold_chain: row.try_get("requires_cold_chain")?,
+        })
+    }
+}
+
+/// Full shipment row when the wallet is sender or recipient.
+#[derive(Debug)]
+pub struct ShipmentDetailRow {
+    pub id: Uuid,
+    pub on_chain_shipment_id: i64,
+    pub sender_wallet: String,
+    pub recipient_wallet: String,
+    pub product: String,
+    pub origin: String,
+    pub destination: String,
+    pub status: String,
+    pub requires_cold_chain: bool,
+    pub checkpoint_count: i32,
+    pub incident_count: i32,
+    pub created_at: DateTime<Utc>,
+    pub delivered_at: Option<DateTime<Utc>>,
+}
+
+impl<'r> FromRow<'r, PgRow> for ShipmentDetailRow {
+    fn from_row(row: &'r PgRow) -> Result<Self, SqlxError> {
+        Ok(ShipmentDetailRow {
+            id: row.try_get("id")?,
+            on_chain_shipment_id: row.try_get("on_chain_shipment_id")?,
+            sender_wallet: row.try_get("sender_wallet")?,
+            recipient_wallet: row.try_get("recipient_wallet")?,
+            product: row.try_get("product")?,
+            origin: row.try_get("origin")?,
+            destination: row.try_get("destination")?,
+            status: row.try_get("status")?,
+            requires_cold_chain: row.try_get("requires_cold_chain")?,
+            checkpoint_count: row.try_get("checkpoint_count")?,
+            incident_count: row.try_get("incident_count")?,
+            created_at: row.try_get("created_at")?,
+            delivered_at: row.try_get("delivered_at")?,
+        })
+    }
+}
+
+pub async fn list_shipments_for_wallet(
+    pool: &PgPool,
+    wallet: &str,
+) -> Result<Vec<ShipmentListRow>, sqlx::Error> {
+    sqlx::query_as::<_, ShipmentListRow>(
+        r#"SELECT id, on_chain_shipment_id, status, product, created_at, requires_cold_chain
+           FROM shipments
+           WHERE sender_wallet = $1 OR recipient_wallet = $1
+           ORDER BY created_at DESC"#,
+    )
+    .bind(wallet)
+    .fetch_all(pool)
+    .await
+}
+
+pub async fn select_shipment_detail_for_participant(
+    pool: &PgPool,
+    shipment_id: Uuid,
+    wallet: &str,
+) -> Result<Option<ShipmentDetailRow>, sqlx::Error> {
+    sqlx::query_as::<_, ShipmentDetailRow>(
+        r#"SELECT id, on_chain_shipment_id, sender_wallet, recipient_wallet, product, origin,
+                  destination, status, requires_cold_chain, checkpoint_count, incident_count,
+                  created_at, delivered_at
+           FROM shipments
+           WHERE id = $1 AND (sender_wallet = $2 OR recipient_wallet = $2)"#,
+    )
+    .bind(shipment_id)
+    .bind(wallet)
+    .fetch_optional(pool)
+    .await
+}
 
 pub async fn id_by_creation_tx_hash(
     pool: &PgPool,
