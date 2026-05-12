@@ -8,8 +8,8 @@ use super::{
     first_matching_account, pubkey_bs58, validate_signature_base58, CheckpointSyncResponse,
     SyncOutcome, SyncRequestBody,
 };
-use crate::domain::shipment_status::next_status_after_checkpoint;
 use crate::repos::checkpoints;
+use crate::services::shipment_status_transition;
 use crate::solana::decode::{checkpoint_type_code, decode_checkpoint_account};
 use crate::solana::discriminators::record_checkpoint_ix;
 use crate::solana::parse::{
@@ -123,20 +123,9 @@ pub async fn sync_checkpoint(
     .await
     .map_err(|e| SolanaSyncError::Validation(e.to_string()))?;
 
-    let current_status =
-        checkpoints::select_shipment_status(&mut txdb, shipment_uuid)
-            .await
-            .map_err(|e| SolanaSyncError::Validation(e.to_string()))?;
-
-    let maybe_next = next_status_after_checkpoint(&current_status, cp_type);
-
-    checkpoints::bump_checkpoint_count_update_status(
-        &mut txdb,
-        shipment_uuid,
-        maybe_next.as_deref(),
-    )
-    .await
-    .map_err(|e| SolanaSyncError::Validation(e.to_string()))?;
+    shipment_status_transition::apply_after_checkpoint_inserted(&mut txdb, shipment_uuid, cp_type)
+        .await
+        .map_err(|e| SolanaSyncError::Validation(e.to_string()))?;
 
     txdb
         .commit()

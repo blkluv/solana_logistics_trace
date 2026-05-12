@@ -2,10 +2,12 @@ pub mod config;
 pub mod cors;
 pub mod db;
 pub mod domain;
+pub mod dto;
 pub mod handlers;
 pub mod repos;
 pub mod services;
 pub mod solana;
+pub mod wallet_query;
 
 use std::sync::Arc;
 
@@ -40,6 +42,10 @@ pub fn build_rocket(
                 handlers::sync::post_sync_actor,
                 handlers::sync::post_sync_shipment,
                 handlers::sync::post_sync_checkpoint,
+                handlers::shipments::list_shipment_checkpoints,
+                handlers::shipments::get_shipment,
+                handlers::shipments::list_shipments,
+                handlers::actors::get_actor_me,
             ],
         )
 }

@@ -7,6 +7,7 @@ dist/
 build/
 .next/
 target/
+target-ci/
 coverage/
 .npm-user-cache/
 frontend/.npm-cache/

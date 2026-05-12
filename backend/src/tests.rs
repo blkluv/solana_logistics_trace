@@ -347,3 +347,37 @@ async fn actors_sync_returns_422_when_instruction_discriminator_mismatch() {
 
     assert_eq!(response.status(), Status::UnprocessableEntity);
 }
+
+#[tokio::test]
+async fn shipments_list_returns_400_without_wallet() {
+    let client = tracked_client_with_mock_solana(vec!["http://localhost:3000".into()]).await;
+    let response = client.get("/api/v1/shipments").dispatch().await;
+    assert_eq!(response.status(), Status::BadRequest);
+}
+
+#[tokio::test]
+async fn shipments_list_returns_400_for_invalid_wallet() {
+    let client = tracked_client_with_mock_solana(vec!["http://localhost:3000".into()]).await;
+    let response = client
+        .get("/api/v1/shipments?wallet=not-base58!!!")
+        .dispatch()
+        .await;
+    assert_eq!(response.status(), Status::BadRequest);
+}
+
+#[tokio::test]
+async fn shipments_list_returns_500_when_database_unreachable() {
+    let client = tracked_client_with_mock_solana(vec!["http://localhost:3000".into()]).await;
+    let valid = bs58::encode([1u8; 32]).into_string();
+    let uri = format!("/api/v1/shipments?wallet={}", valid);
+    let response = client.get(uri).dispatch().await;
+    assert_eq!(response.status(), Status::InternalServerError);
+}
+
+#[tokio::test]
+async fn actors_me_returns_400_without_wallet() {
+    let client = tracked_client_with_mock_solana(vec!["http://localhost:3000".into()]).await;
+    let response = client.get("/api/v1/actors/me").dispatch().await;
+    assert_eq!(response.status(), Status::BadRequest);
+}
+
