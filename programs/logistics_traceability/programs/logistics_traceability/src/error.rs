@@ -14,4 +14,12 @@ pub enum ErrorCode {
     StringTooLong,
     #[msg("Checkpoint metadata exceeds 512 bytes")]
     MetadataTooLong,
+    #[msg("Only the shipment sender may cancel")]
+    UnauthorizedSender,
+    #[msg("Only the shipment recipient may confirm delivery")]
+    UnauthorizedRecipient,
+    #[msg("Shipment is already delivered or cancelled")]
+    ShipmentAlreadyClosed,
+    #[msg("Delivery can only be confirmed when shipment is out for delivery")]
+    InvalidShipmentStatusForConfirm,
 }

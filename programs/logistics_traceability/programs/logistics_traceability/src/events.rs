@@ -24,3 +24,15 @@ pub struct CheckpointRecorded {
     pub shipment_id: u64,
     pub checkpoint_type: CheckpointType,
 }
+
+#[event]
+pub struct ShipmentCancelled {
+    pub on_chain_shipment_id: u64,
+    pub cancelled_by: Pubkey,
+}
+
+#[event]
+pub struct DeliveryConfirmed {
+    pub on_chain_shipment_id: u64,
+    pub recipient: Pubkey,
+}

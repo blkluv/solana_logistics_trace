@@ -61,4 +61,14 @@ pub mod logistics_traceability {
             metadata,
         )
     }
+
+    /// Sender cancels the shipment while it is not yet delivered or cancelled (PLAN §4).
+    pub fn cancel_shipment(ctx: Context<CancelShipment>) -> Result<()> {
+        process_cancel_shipment(ctx)
+    }
+
+    /// Recipient confirms delivery when status is `OutForDelivery` (alternative to checkpoint `Delivered`).
+    pub fn confirm_delivery(ctx: Context<ConfirmDelivery>) -> Result<()> {
+        process_confirm_delivery(ctx)
+    }
 }

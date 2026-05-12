@@ -1,6 +1,6 @@
 # `logistics_traceability` — programa Anchor
 
-Programa on-chain (Etapa 1: actor → envío → checkpoint) del workspace `logistics_trace`. Este README cubre **solo** herramientas Anchor, compilación y despliegue.
+Programa on-chain del workspace `logistics_trace`: **Etapa 1** (actor → envío → checkpoint) y **Etapa 2** (cancelación por remitente, confirmación de entrega por destinatario). Este README cubre **solo** herramientas Anchor, compilación y despliegue.
 
 ## Requisitos
 
@@ -116,6 +116,17 @@ Ajusta `[programs.devnet]` y vuelve a **`anchor keys sync`** si cambias keypair 
 | Limpiar artefactos Anchor | `anchor clean` |
 | Ver IDL generado | `target/idl/logistics_traceability.json` |
 
----
+## Etapa 2 — Transiciones sin checkpoint adicional (PLAN §4)
 
-*Documento acotado a Anchor y despliegue; pipeline backend/frontend y sync HTTP no se describen aquí.*
+Las transiciones por **checkpoint** siguen en `record_checkpoint` + `next_status_after_checkpoint` (`state/shipment.rs`).
+
+Instrucciones adicionales:
+
+| Instrucción | Firmante | Condición | Efecto |
+|-------------|----------|-----------|--------|
+| `cancel_shipment` | `shipment.sender` | Estado ≠ `Delivered` ni `Cancelled` | `status = Cancelled`; evento `ShipmentCancelled`. |
+| `confirm_delivery` | `shipment.recipient` | Estado = `OutForDelivery` | `status = Delivered`, `date_delivered` = ahora; evento `DeliveryConfirmed`. |
+
+Así se cumple la alternativa del plan: entrega por checkpoint tipo `Delivered` **o** por `confirm_delivery` (no ambas en conflicto: si ya está `Delivered`, ambas rutas quedan cerradas).
+
+Para llegar a `OutForDelivery` solo con checkpoints (MVP actual): `Pickup` → `HubIn` → `HubOut` → `Transit`.
