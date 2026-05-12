@@ -46,7 +46,7 @@ export function LandingHome() {
                         </div>
                         <div className="signup-card">
                             <h3>Resumen para stakeholders</h3>
-                            <p className="text-sm text-muted mb-0" style={{ marginBottom: "1rem" }}>
+                            <p className="text-sm text-muted mb-0 signup-card__hint">
                                 Arquitectura hibrida: confiabilidad on-chain para eventos criticos y
                                 consulta de alta velocidad para operacion diaria, BI y SLA.
                             </p>
@@ -176,7 +176,7 @@ export function LandingHome() {
                                     del sistema.
                                 </p>
                             </div>
-                            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                            <div className="btn-row">
                                 <Link prefetch={false} className="btn btn--primary" href="/envios">
                                     Consultar envíos
                                 </Link>

@@ -4,7 +4,7 @@ import Link from "next/link";
 export default function RegistroActorPage() {
     return (
         <main className="page-main">
-            <div className="shell" style={{ maxWidth: "40rem" }}>
+            <div className="shell content-narrow">
                 <h1 className="page-title">Registro de actor</h1>
                 <p className="page-sub">
                     Registre su organización como actor en el programa (remitente, transportista, hub,

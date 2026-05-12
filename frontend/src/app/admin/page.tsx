@@ -82,70 +82,65 @@ export default function AdminHomePage() {
     const cards = roleCards(role);
 
     return (
-        <main className="page-main">
-            <div className="shell">
-                <h1 className="page-title">Panel Admin</h1>
-                <p className="page-sub">
-                    Acciones disponibles según el rol devuelto por el backend para la wallet conectada.
+        <>
+            <h1 className="page-title">Panel Admin</h1>
+            <p className="page-sub">
+                Acciones disponibles según el rol devuelto por el backend para la wallet conectada.
+            </p>
+
+            {!wallet && (
+                <p className="text-muted text-sm" role="status">
+                    Conecte la wallet desde el encabezado para cargar su rol y opciones.
                 </p>
+            )}
 
-                {!wallet && (
-                    <p className="text-muted text-sm" role="status">
-                        Conecte la wallet desde el encabezado para cargar su rol y opciones.
-                    </p>
-                )}
+            {wallet && actorLoading && <p className="text-muted text-sm">Cargando rol…</p>}
 
-                {wallet && actorLoading && (
-                    <p className="text-muted text-sm">Cargando rol…</p>
-                )}
+            {wallet && !actorLoading && (
+                <p className="text-sm">
+                    Rol actual: <strong>{role ?? "—"}</strong>
+                </p>
+            )}
 
-                {wallet && !actorLoading && (
-                    <p className="text-sm">
-                        Rol actual:{" "}
-                        <strong>{role ?? "—"}</strong>
-                    </p>
-                )}
-
-                <div className="layout-split layout-split--2-1 mt-2">
-                    <div className="space-y-2">
-                        {cards.map((c) => (
-                            <section key={c.title} className="card">
-                                <div className="card__hd">{c.title}</div>
-                                <div className="card__bd text-sm">
-                                    <p className="mb-2">{c.body}</p>
-                                    {c.href && c.label && (
-                                        <Link prefetch={false} className="btn btn--secondary btn--sm" href={c.href}>
-                                            {c.label}
-                                        </Link>
-                                    )}
-                                </div>
-                            </section>
-                        ))}
-                    </div>
-                    <div>
-                        <section className="card">
-                            <div className="card__hd">Accesos rápidos</div>
-                            <div className="card__bd text-sm space-y-2">
-                                <Link prefetch={false} className="btn btn--ghost btn--sm" href="/consola">
-                                    Consola del sistema
-                                </Link>
-                                <Link prefetch={false} className="btn btn--ghost btn--sm" href="/sistema">
-                                    Red y programa (.env)
-                                </Link>
-                                {showDemo ? (
-                                    <Link prefetch={false} className="btn btn--ghost btn--sm" href="/demo">
-                                        Demo on-chain
+            <div className="layout-split layout-split--2-1 mt-2">
+                <div className="stack-cards">
+                    {cards.map((c) => (
+                        <section key={c.title} className="card">
+                            <div className="card__hd">{c.title}</div>
+                            <div className="card__bd text-sm">
+                                <p className="mb-2">{c.body}</p>
+                                {c.href && c.label && (
+                                    <Link prefetch={false} className="btn btn--secondary btn--sm" href={c.href}>
+                                        {c.label}
                                     </Link>
-                                ) : (
-                                    <p className="text-muted mb-0">
-                                        Demo on-chain no aplica a su rol (Inspector) o sin wallet.
-                                    </p>
                                 )}
                             </div>
                         </section>
-                    </div>
+                    ))}
+                </div>
+                <div>
+                    <section className="card">
+                        <div className="card__hd">Accesos rápidos</div>
+                        <div className="card__bd text-sm stack-links">
+                            <Link prefetch={false} className="btn btn--ghost btn--sm" href="/consola">
+                                Consola del sistema
+                            </Link>
+                            <Link prefetch={false} className="btn btn--ghost btn--sm" href="/sistema">
+                                Red y programa (.env)
+                            </Link>
+                            {showDemo ? (
+                                <Link prefetch={false} className="btn btn--ghost btn--sm" href="/demo">
+                                    Demo on-chain
+                                </Link>
+                            ) : (
+                                <p className="text-muted mb-0">
+                                    Demo on-chain no aplica a su rol (Inspector) o sin wallet.
+                                </p>
+                            )}
+                        </div>
+                    </section>
                 </div>
             </div>
-        </main>
+        </>
     );
 }
