@@ -1,7 +1,7 @@
-import Link from "next/link";
+import { PanelEtapa2Rail } from "@/components/panel/PanelEtapa2Rail";
 
 /**
- * Shell corporativo del área panel (Etapa 2): rail lateral + contenido.
+ * Shell corporativo del área panel (Etapa 2): rail lateral con capacidades por rol + contenido.
  */
 export default function PanelLayout({
     children,
@@ -10,23 +10,7 @@ export default function PanelLayout({
 }>) {
     return (
         <div className="panel-etapa2-shell">
-            <aside className="panel-etapa2-rail" aria-label="Navegación del panel">
-                <div className="panel-etapa2-rail__brand">Panel operativo</div>
-                <nav className="panel-etapa2-rail__nav">
-                    <Link prefetch={false} className="panel-etapa2-rail__link" href="/panel">
-                        Resumen
-                    </Link>
-                    <Link prefetch={false} className="panel-etapa2-rail__link" href="/panel/envios">
-                        Envíos
-                    </Link>
-                    <Link prefetch={false} className="panel-etapa2-rail__link" href="/demo">
-                        Operaciones on-chain
-                    </Link>
-                    <Link prefetch={false} className="panel-etapa2-rail__link" href="/sistema">
-                        Sistema
-                    </Link>
-                </nav>
-            </aside>
+            <PanelEtapa2Rail />
             <div className="panel-etapa2-main">{children}</div>
         </div>
     );
