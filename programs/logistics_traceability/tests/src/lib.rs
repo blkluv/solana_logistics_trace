@@ -14,4 +14,7 @@ mod test_create_shipment;
 mod test_record_checkpoint;
 
 #[cfg(test)]
+mod test_cancel_confirm_delivery;
+
+#[cfg(test)]
 mod test_event_logs;
