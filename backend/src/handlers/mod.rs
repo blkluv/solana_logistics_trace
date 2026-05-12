@@ -1,3 +1,4 @@
+pub mod actors;
 pub mod catalogs;
 pub mod health;
 pub mod shipments;
