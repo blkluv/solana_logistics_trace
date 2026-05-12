@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 const NAV = [
     { href: "/", label: "Inicio" },
     { href: "/panel", label: "Panel" },
+    { href: "/panel/envios", label: "Envíos" },
     { href: "/demo", label: "Operaciones" },
     { href: "/sistema", label: "Sistema" },
 ] as const;
