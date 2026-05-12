@@ -1,5 +1,6 @@
 "use client";
 
+import { sortCheckpointsByOccurredAt } from "@/lib/panel/timelineSort";
 import type { CheckpointItem } from "@/lib/api/shipments";
 
 export type CheckpointTimelineProps = {
@@ -7,13 +8,14 @@ export type CheckpointTimelineProps = {
 };
 
 export function CheckpointTimeline({ checkpoints }: CheckpointTimelineProps) {
-    if (checkpoints.length === 0) {
+    const ordered = sortCheckpointsByOccurredAt(checkpoints);
+    if (ordered.length === 0) {
         return <p className="text-muted text-sm">Sin checkpoints registrados.</p>;
     }
 
     return (
         <ol className="panel-etapa2-timeline" data-testid="checkpoint-timeline">
-            {checkpoints.map((c) => (
+            {ordered.map((c) => (
                 <li key={c.checkpointId} className="panel-etapa2-timeline__item">
                     <div className="panel-etapa2-timeline__dot" aria-hidden />
                     <div className="panel-etapa2-timeline__body">
