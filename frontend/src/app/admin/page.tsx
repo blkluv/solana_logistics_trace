@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { canUseOperationsDemoNav } from "@/lib/panel/capabilities";
+import { canUseChainOperationsNav } from "@/lib/panel/capabilities";
 import { useWalletSession } from "@/lib/wallet/WalletSessionContext";
 
 function roleCards(role: string | null): { title: string; body: string; href?: string; label?: string }[] {
@@ -10,67 +10,103 @@ function roleCards(role: string | null): { title: string; body: string; href?: s
         case "Sender":
             return [
                 {
-                    title: "Envíos creados",
-                    body: "Consulte y dé seguimiento a los envíos asociados a su wallet.",
-                    href: "/envios",
-                    label: "Ir a consulta de envíos",
+                    title: "Resumen y envíos",
+                    body: "Dashboard por rol, KPIs y listado en el panel operativo.",
+                    href: "/panel",
+                    label: "Abrir resumen",
                 },
                 {
-                    title: "Operaciones on-chain",
-                    body: "Crear envíos y checkpoints firmados desde la demo técnica.",
+                    title: "Alta de envíos",
+                    body: "Cree envíos con firma en Solana y sincronización al backend.",
+                    href: "/panel/envios",
+                    label: "Ir a envíos",
+                },
+                {
+                    title: "Operaciones en cadena",
+                    body: "Inicialización del programa, actores, envíos y checkpoints firmados.",
                     href: "/demo",
-                    label: "Abrir demo",
+                    label: "Abrir operaciones",
                 },
             ];
         case "Carrier":
             return [
                 {
-                    title: "Transporte activo",
-                    body: "Registre checkpoints de tránsito y entrega según el flujo del programa.",
-                    href: "/demo",
-                    label: "Demo operaciones",
+                    title: "Panel operativo",
+                    body: "Consulte envíos donde intervenga su cartera y registre checkpoints.",
+                    href: "/panel",
+                    label: "Resumen",
                 },
                 {
-                    title: "Visibilidad",
-                    body: "Consulte envíos donde participe su wallet.",
-                    href: "/envios",
-                    label: "Consulta pública",
+                    title: "Listado de envíos",
+                    body: "Vista detallada y enlaces al detalle con mapa y línea de tiempo.",
+                    href: "/panel/envios",
+                    label: "Ir a envíos",
+                },
+                {
+                    title: "Operaciones en cadena",
+                    body: "Firma de checkpoints y sincronización.",
+                    href: "/demo",
+                    label: "Abrir operaciones",
                 },
             ];
         case "Hub":
             return [
                 {
-                    title: "Operaciones de hub",
-                    body: "Entradas y salidas de mercancía en el nodo logístico.",
+                    title: "Panel operativo",
+                    body: "Resumen de envíos y eventos vinculados a su nodo.",
+                    href: "/panel",
+                    label: "Resumen",
+                },
+                {
+                    title: "Operaciones en cadena",
+                    body: "Registro de eventos logísticos con firma.",
                     href: "/demo",
-                    label: "Demo",
+                    label: "Abrir operaciones",
                 },
             ];
         case "Recipient":
             return [
                 {
-                    title: "Recepción",
-                    body: "Confirme entregas y consulte el historial del envío.",
-                    href: "/envios",
-                    label: "Consultar envíos",
+                    title: "Seguimiento",
+                    body: "Envíos donde figura como destinatario.",
+                    href: "/panel/envios",
+                    label: "Ir a envíos",
+                },
+                {
+                    title: "Resumen",
+                    body: "Indicadores y accesos rápidos del panel.",
+                    href: "/panel",
+                    label: "Abrir resumen",
                 },
             ];
         case "Inspector":
             return [
                 {
                     title: "Auditoría",
-                    body: "Rol de solo lectura: use la consulta pública sin operaciones de firma.",
-                    href: "/envios",
-                    label: "Consulta pública",
+                    body: "Rol de solo lectura: consulte envíos autorizados sin operaciones de firma.",
+                    href: "/panel/envios",
+                    label: "Consultar envíos",
+                },
+                {
+                    title: "Resumen",
+                    body: "Vista general del panel operativo.",
+                    href: "/panel",
+                    label: "Abrir resumen",
                 },
             ];
         default:
             return [
                 {
-                    title: "Sin rol en backend",
-                    body: "Conecte la wallet y complete el registro de actor para ver el panel por rol.",
+                    title: "Registro de actor",
+                    body: "Conecte la wallet y complete el alta como actor para desbloquear el panel por rol.",
                     href: "/registro",
                     label: "Ir a registro",
+                },
+                {
+                    title: "Panel operativo",
+                    body: "Tras el registro, el resumen y los envíos se adaptan a su rol.",
+                    href: "/panel",
+                    label: "Abrir panel",
                 },
             ];
     }
@@ -78,14 +114,15 @@ function roleCards(role: string | null): { title: string; body: string; href?: s
 
 export default function AdminHomePage() {
     const { wallet, role, actorLoading } = useWalletSession();
-    const showDemo = canUseOperationsDemoNav(Boolean(wallet), role);
+    const showChainOps = canUseChainOperationsNav(Boolean(wallet), role);
     const cards = roleCards(role);
 
     return (
         <>
-            <h1 className="page-title">Panel Admin</h1>
+            <h1 className="page-title">Administración y sync</h1>
             <p className="page-sub">
-                Acciones disponibles según el rol devuelto por el backend para la wallet conectada.
+                Accesos según el rol devuelto por el backend para la wallet conectada. El trabajo
+                cotidiano está en el panel operativo; aquí se concentran enlaces de apoyo.
             </p>
 
             {!wallet && (
@@ -122,19 +159,25 @@ export default function AdminHomePage() {
                     <section className="card">
                         <div className="card__hd">Accesos rápidos</div>
                         <div className="card__bd text-sm stack-links">
+                            <Link prefetch={false} className="btn btn--ghost btn--sm" href="/panel">
+                                Panel — resumen
+                            </Link>
+                            <Link prefetch={false} className="btn btn--ghost btn--sm" href="/panel/envios">
+                                Panel — envíos
+                            </Link>
                             <Link prefetch={false} className="btn btn--ghost btn--sm" href="/consola">
                                 Consola del sistema
                             </Link>
                             <Link prefetch={false} className="btn btn--ghost btn--sm" href="/sistema">
                                 Red y programa (.env)
                             </Link>
-                            {showDemo ? (
+                            {showChainOps ? (
                                 <Link prefetch={false} className="btn btn--ghost btn--sm" href="/demo">
-                                    Demo on-chain
+                                    Operaciones en cadena
                                 </Link>
                             ) : (
                                 <p className="text-muted mb-0">
-                                    Demo on-chain no aplica a su rol (Inspector) o sin wallet.
+                                    Operaciones en cadena no aplican (Inspector o sin wallet).
                                 </p>
                             )}
                         </div>

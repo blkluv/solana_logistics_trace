@@ -84,6 +84,13 @@
   margin-bottom: 0.75rem;
 }
 
+.panel-etapa2-tracker__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
 .panel-etapa2-timeline {
   list-style: none;
   margin: 0;
