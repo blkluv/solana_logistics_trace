@@ -1,35 +1,15 @@
-import Link from "next/link";
+import { ActorRegistrationForm } from "@/components/registro/ActorRegistrationForm";
 
-/** Alta de actor on-chain + sync (Etapa 1); flujo dedicado sin mezclar con consulta pública. */
+/**
+ * Alta de actor: solo formulario (firma Phantom vía barra superior).
+ * Maquetación de referencia: `TMF-Docs/imagenes/*.png` y `TMF-Docs/tracesol-preview/`.
+ */
 export default function RegistroActorPage() {
     return (
-        <main className="page-main">
-            <div className="shell content-narrow">
-                <h1 className="page-title">Registro de actor</h1>
-                <p className="page-sub">
-                    Registre su organización como actor en el programa (remitente, transportista, hub,
-                    receptor o inspector). La firma ocurre en Phantom; el backend indexa la cuenta vía
-                    sync.
-                </p>
-                <div className="card mt-2">
-                    <div className="card__hd">Flujo técnico</div>
-                    <div className="card__bd space-y-3 text-sm">
-                        <ol className="pl-4 mb-0 space-y-2">
-                            <li>Conecte la wallet con el botón del encabezado.</li>
-                            <li>Abra la demo Etapa 1 y complete el registro on-chain.</li>
-                            <li>Espere la sincronización o use el endpoint de sync del backend.</li>
-                        </ol>
-                        <Link prefetch={false} className="btn btn--primary" href="/demo">
-                            Ir a demo de registro
-                        </Link>
-                        <p className="text-muted mb-0">
-                            Tras registrarse, use{" "}
-                            <Link prefetch={false} href="/admin">
-                                Admin
-                            </Link>{" "}
-                            para ver las acciones permitidas según su rol.
-                        </p>
-                    </div>
+        <main className="page-main page-main--registro">
+            <div className="shell">
+                <div className="registro-page">
+                    <ActorRegistrationForm />
                 </div>
             </div>
         </main>

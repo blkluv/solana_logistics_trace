@@ -1,12 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-    Connection,
-    PublicKey,
-    Transaction,
-    type TransactionInstruction,
-} from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 
 import {
     apiBaseHasV1Prefix,
@@ -33,9 +28,9 @@ import {
     createRecordCheckpointIx,
     createRegisterActorIx,
 } from "@/lib/solana/instructions";
+import { confirmSerializedTx } from "@/lib/solana/confirmSerializedTx";
 import { fetchProgramConfig } from "@/lib/solana/program_config";
 import { actorPda, shipmentPda } from "@/lib/solana/pdas";
-import { signTransactionWithPhantom } from "@/lib/wallet/phantom";
 import {
     adminHints,
     catalogSourceLabel,
@@ -49,38 +44,6 @@ import {
 } from "@/lib/panel/etapa1UserMessages";
 
 import { PhantomConnect } from "./PhantomConnect";
-
-async function confirmSerializedTx(
-    connection: Connection,
-    payer: PublicKey,
-    ix: TransactionInstruction,
-): Promise<string> {
-    const latest = await connection.getLatestBlockhash("confirmed");
-    const tx = new Transaction({
-        feePayer: payer,
-        recentBlockhash: latest.blockhash,
-    });
-    tx.add(ix);
-    tx.lastValidBlockHeight = latest.lastValidBlockHeight;
-
-    const signed = await signTransactionWithPhantom(tx);
-    const serialized = signed.serialize();
-
-    const signature = await connection.sendRawTransaction(serialized, {
-        skipPreflight: false,
-    });
-
-    await connection.confirmTransaction(
-        {
-            signature,
-            blockhash: latest.blockhash,
-            lastValidBlockHeight: latest.lastValidBlockHeight,
-        },
-        "confirmed",
-    );
-
-    return signature;
-}
 
 /** Coincide con seeds `cat_*` y orden Borsh del programa si la API no está disponible. */
 const FALLBACK_ACTOR_ROWS: CatalogOptionRow<ActorRoleCode>[] = [
@@ -135,7 +98,7 @@ export function Etapa1Demo() {
         useState<Awaited<ReturnType<typeof fetchProgramConfig>>>(null);
 
     const [role, setRole] = useState<ActorRoleCode>(Role.Sender);
-    const [actorName, setActorName] = useState("Operador Demo");
+    const [actorName, setActorName] = useState("Operador");
     const [actorLocation, setActorLocation] = useState("Madrid, ES");
 
     const [recipient, setRecipient] = useState("");
