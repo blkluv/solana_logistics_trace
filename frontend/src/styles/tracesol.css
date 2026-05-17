@@ -896,6 +896,40 @@ table.data-table {
   color: var(--color-danger);
 }
 
+.geo-point-field {
+  border: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.geo-point-field__legend {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: 0.5rem;
+  padding: 0;
+}
+
+.geo-point-field__mode {
+  margin-bottom: 0.65rem;
+}
+
+.geo-point-field__map {
+  margin-top: 0.35rem;
+}
+
+.geo-map-picker__canvas {
+  height: 220px;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  z-index: 0;
+}
+
+.geo-map-picker .leaflet-container {
+  font-family: inherit;
+}
+
 .admin-modal-root {
   position: fixed;
   inset: 0;

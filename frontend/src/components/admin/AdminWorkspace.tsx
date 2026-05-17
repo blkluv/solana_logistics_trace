@@ -113,6 +113,7 @@ export function AdminWorkspace() {
                         programId={programId}
                         payer={payer}
                         apiBaseUrl={cfg.apiBaseUrl}
+                        role={role}
                         onSuccess={() => void onStepSuccess()}
                     />
                 );
@@ -148,6 +149,7 @@ export function AdminWorkspace() {
         selectedShipmentPda,
         selectedShipment,
         cfg.apiBaseUrl,
+        role,
     ]);
 
     return (

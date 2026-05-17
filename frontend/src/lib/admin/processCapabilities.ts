@@ -49,7 +49,10 @@ export function roleMayExecuteStep(step: AdminProcessStep, role: string | null):
             }
             return true;
         case "create_shipment":
-            return role === "Sender";
+            if (role === "Inspector") {
+                return false;
+            }
+            return role === "Sender" || role === null;
         case "record_checkpoint":
             return (
                 role === "Carrier" ||
@@ -121,9 +124,6 @@ export function stepLockReason(step: AdminProcessStep, ctx: AdminProcessContext)
         return "Registre el actor antes de continuar.";
     }
     if (step === "create_shipment") {
-        if (!ctx.actorInBackend && ctx.actorOnChain) {
-            return "Sincronice el actor con el backend o espere a que termine la replicación.";
-        }
         if (!roleMayExecuteStep(step, ctx.role)) {
             if (ctx.role === null) {
                 return "Su rol aún no está disponible en el backend.";

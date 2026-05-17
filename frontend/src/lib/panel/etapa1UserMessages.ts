@@ -105,6 +105,14 @@ export function userFacingChainError(step: ChainStepKey, rawMessage: string): st
     if (m.includes("ProgramConfig")) {
         return "Primero debe activarse el programa en esta red.";
     }
+    if (
+        m.includes("AccountNotInitialized") ||
+        m.includes("sender_actor") ||
+        m.includes("0xbc4") ||
+        /account.*not.*initialized/i.test(m)
+    ) {
+        return "Registre su actor como remitente (Sender) en esta red antes de crear envíos.";
+    }
     if (m.includes("Usuario rechazó") || m.includes("rejected") || m.includes("cancelled")) {
         return "Operación cancelada en la billetera.";
     }
