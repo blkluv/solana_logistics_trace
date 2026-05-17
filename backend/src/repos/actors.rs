@@ -23,6 +23,44 @@ pub async fn wallet_exists_for_wallet(
         .await
 }
 
+pub async fn update_actor_from_chain_sync(
+    pool: &PgPool,
+    wallet: &str,
+    role: &str,
+    name: &str,
+    location: Option<&String>,
+    is_active: bool,
+    shipments_created: i32,
+    checkpoints_recorded: i32,
+    created_at: DateTime<Utc>,
+    registration_tx_hash: &str,
+) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        r#"UPDATE actors
+           SET role = $2,
+               name = $3,
+               location = $4,
+               is_active = $5,
+               shipments_created = $6,
+               checkpoints_recorded = $7,
+               created_at = $8,
+               registration_tx_hash = $9
+           WHERE wallet = $1"#,
+    )
+    .bind(wallet)
+    .bind(role)
+    .bind(name)
+    .bind(location)
+    .bind(is_active)
+    .bind(shipments_created)
+    .bind(checkpoints_recorded)
+    .bind(created_at)
+    .bind(registration_tx_hash)
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
 pub async fn insert_actor(
     pool: &PgPool,
     wallet: &str,
@@ -63,6 +101,16 @@ pub async fn select_actor_row(
     .bind(wallet)
     .fetch_one(pool)
     .await
+}
+
+pub async fn select_role_for_wallet(
+    pool: &PgPool,
+    wallet: &str,
+) -> Result<Option<String>, sqlx::Error> {
+    sqlx::query_scalar(r#"SELECT role FROM actors WHERE wallet = $1"#)
+        .bind(wallet)
+        .fetch_optional(pool)
+        .await
 }
 
 pub async fn select_actor_optional(
