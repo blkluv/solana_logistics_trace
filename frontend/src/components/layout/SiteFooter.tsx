@@ -8,8 +8,8 @@ export function SiteFooter() {
                     <div>
                         <div className="footer-brand">TraceSol Logistics</div>
                         <p className="mb-0">
-                            Trazabilidad con pie en el día a día y respaldo on-chain (Solana). Frontend
-                            Etapa 1: registro de actor, envío y checkpoint con sincronización al
+                            Trazabilidad con pie en el día a día y respaldo on-chain (Solana): panel
+                            operativo, registro de actor, envíos y checkpoints con sincronización al
                             backend.
                         </p>
                     </div>
@@ -24,11 +24,6 @@ export function SiteFooter() {
                             <li>
                                 <Link prefetch={false} href="/admin">
                                     Panel Admin
-                                </Link>
-                            </li>
-                            <li>
-                                <Link prefetch={false} href="/demo">
-                                    Demo flujo Etapa 1
                                 </Link>
                             </li>
                         </ul>

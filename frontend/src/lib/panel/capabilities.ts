@@ -19,12 +19,17 @@ export function canAccessOnChainOperationsPanel(role: string | null): boolean {
     return role !== "Inspector";
 }
 
-/** Demo Etapa 1 / operaciones on-chain: wallet + no Inspector cuando el rol es conocido. */
-export function canUseOperationsDemoNav(
-    walletConnected: boolean,
-    role: string | null,
-): boolean {
+/** Operaciones on-chain (firma): wallet conectada y rol distinto de Inspector. */
+export function canUseChainOperationsNav(walletConnected: boolean, role: string | null): boolean {
     return walletConnected && canAccessOnChainOperationsPanel(role);
+}
+
+/** @deprecated Usar `canUseChainOperationsNav`. */
+export const canUseOperationsDemoNav = canUseChainOperationsNav;
+
+/** Solo remitentes crean envíos en el flujo actual del programa. */
+export function canSenderRegisterShipments(role: string | null): boolean {
+    return role === "Sender";
 }
 
 /** Enlaces de envíos requieren wallet conectada (query `wallet` obligatoria en API). */

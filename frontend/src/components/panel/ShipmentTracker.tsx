@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 
 import { getShipmentsForWallet, type ShipmentListItem } from "@/lib/api/shipments";
@@ -18,14 +19,34 @@ function statusBadgeClass(status: string): string {
     }
 }
 
+export type ShipmentTrackerControlled = {
+    rows: ShipmentListItem[] | null;
+    loading: boolean;
+    error: string | null;
+    onReload: () => void | Promise<void>;
+};
+
 export type ShipmentTrackerProps = {
     apiBaseUrl: string;
     wallet: string;
     /** Genera enlace al detalle (por defecto `/envios/:id?wallet=`). */
     detailHref?: (shipmentId: string, rowWallet: string) => string;
+    /** Título del bloque (por defecto: seguimiento de envíos). */
+    title?: string;
+    /** Controles extra junto a «Actualizar» (p. ej. «Nuevo envío»). */
+    headerActions?: ReactNode;
+    /** Datos ya cargados por el padre (evita doble petición). */
+    controlled?: ShipmentTrackerControlled;
 };
 
-export function ShipmentTracker({ apiBaseUrl, wallet, detailHref }: ShipmentTrackerProps) {
+export function ShipmentTracker({
+    apiBaseUrl,
+    wallet,
+    detailHref,
+    title,
+    headerActions,
+    controlled,
+}: ShipmentTrackerProps) {
     const [rows, setRows] = useState<ShipmentListItem[] | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -54,23 +75,36 @@ export function ShipmentTracker({ apiBaseUrl, wallet, detailHref }: ShipmentTrac
     }, [apiBaseUrl, wallet]);
 
     useEffect(() => {
+        if (controlled) {
+            return;
+        }
         void Promise.resolve().then(() => void load());
-    }, [load]);
+    }, [controlled, load]);
+
+    const displayRows = controlled ? controlled.rows : rows;
+    const displayLoading = controlled ? controlled.loading : loading;
+    const displayError = controlled ? controlled.error : error;
+    const reload = controlled ? () => void controlled.onReload() : () => void load();
+
+    const blockTitle = title ?? "Seguimiento de envíos";
 
     return (
         <div className="panel-etapa2-tracker" data-testid="shipment-tracker">
             <div className="panel-etapa2-tracker__hd">
-                <h2 className="panel-etapa2-title">Seguimiento de envíos</h2>
-                <button type="button" className="btn btn--secondary btn--sm" onClick={() => void load()}>
-                    Actualizar
-                </button>
+                <h2 className="panel-etapa2-title">{blockTitle}</h2>
+                <div className="panel-etapa2-tracker__actions">
+                    {headerActions}
+                    <button type="button" className="btn btn--secondary btn--sm" onClick={() => void reload()}>
+                        Actualizar
+                    </button>
+                </div>
             </div>
-            {loading && <p className="text-muted text-sm">Cargando…</p>}
-            {error && <p className="text-sm" role="alert">{error}</p>}
-            {!loading && rows && rows.length === 0 && (
+            {displayLoading && <p className="text-muted text-sm">Cargando…</p>}
+            {displayError && <p className="text-sm" role="alert">{displayError}</p>}
+            {!displayLoading && displayRows && displayRows.length === 0 && (
                 <p className="text-muted text-sm">No hay envíos para esta wallet.</p>
             )}
-            {rows && rows.length > 0 && (
+            {displayRows && displayRows.length > 0 && (
                 <div className="table-wrap">
                     <table className="data-table">
                         <thead>
@@ -84,7 +118,7 @@ export function ShipmentTracker({ apiBaseUrl, wallet, detailHref }: ShipmentTrac
                             </tr>
                         </thead>
                         <tbody>
-                            {rows.map((r) => (
+                            {displayRows.map((r) => (
                                 <tr key={r.shipmentId}>
                                     <td className="mono text-sm">{r.shipmentId.slice(0, 8)}…</td>
                                     <td className="mono text-sm">{r.onChainShipmentId}</td>

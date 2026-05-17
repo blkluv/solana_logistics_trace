@@ -16,7 +16,7 @@ const inter = Inter({
 export const metadata: Metadata = {
     title: "TraceSol Logistics · Trazabilidad",
     description:
-        "Visibilidad logística y demo Etapa 1: actor, envío y checkpoint en Solana con sync al backend.",
+        "Trazabilidad logística: panel operativo, actor, envíos y checkpoints en Solana con sincronización al backend.",
 };
 
 export default function RootLayout({
