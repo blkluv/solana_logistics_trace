@@ -47,6 +47,13 @@ export function canRecordCheckpointAction(params: {
         return { enabled: false, reason: "Su rol no puede registrar eventos." };
     }
     if (actorOnChain === false) {
+        if (role) {
+            return {
+                enabled: false,
+                reason:
+                    "Su actor está en el backend pero no en la cadena (p. ej. tras reiniciar el validador). Vuelva a /registro con la misma wallet y sincronice.",
+            };
+        }
         return { enabled: false, reason: "Registre su actor en la página de registro." };
     }
     return { enabled: true };
