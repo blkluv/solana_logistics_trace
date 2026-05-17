@@ -22,11 +22,11 @@ export function LandingHome() {
                             <span className="tag">Integracion API-first</span>
                         </div>
                         <div className="hero__cta">
-                            <Link prefetch={false} className="btn btn--primary" href="/demo">
-                                Solicitar walkthrough
+                            <Link prefetch={false} className="btn btn--primary" href="/envios">
+                                Consultar envíos
                             </Link>
-                            <Link prefetch={false} className="btn btn--secondary" href="/panel">
-                                Ver panel ejecutivo
+                            <Link prefetch={false} className="btn btn--secondary" href="/registro">
+                                Registro de actor
                             </Link>
                         </div>
                     </div>
@@ -46,12 +46,12 @@ export function LandingHome() {
                         </div>
                         <div className="signup-card">
                             <h3>Resumen para stakeholders</h3>
-                            <p className="text-sm text-muted mb-0" style={{ marginBottom: "1rem" }}>
+                            <p className="text-sm text-muted mb-0 signup-card__hint">
                                 Arquitectura hibrida: confiabilidad on-chain para eventos criticos y
                                 consulta de alta velocidad para operacion diaria, BI y SLA.
                             </p>
-                            <Link prefetch={false} className="btn btn--primary btn--block" href="/sistema">
-                                Revisar arquitectura y red
+                            <Link prefetch={false} className="btn btn--primary btn--block" href="/consola">
+                                Estado del sistema y red
                             </Link>
                         </div>
                     </div>
@@ -172,19 +172,19 @@ export function LandingHome() {
                                     Comience con una evaluacion ejecutiva
                                 </h2>
                                 <p className="text-muted text-sm mt-1">
-                                    Revise la demo de trazabilidad, el panel operativo y la
-                                    configuracion tecnica inicial.
+                                    Consulta pública, registro de actor, panel admin por rol y consola
+                                    del sistema.
                                 </p>
                             </div>
-                            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                                <Link prefetch={false} className="btn btn--primary" href="/demo">
-                                    Demo funcional
+                            <div className="btn-row">
+                                <Link prefetch={false} className="btn btn--primary" href="/envios">
+                                    Consultar envíos
                                 </Link>
-                                <Link prefetch={false} className="btn btn--secondary" href="/panel">
-                                    Dashboard
+                                <Link prefetch={false} className="btn btn--secondary" href="/admin">
+                                    Panel Admin
                                 </Link>
-                                <Link prefetch={false} className="btn btn--ghost" href="/sistema">
-                                    Arquitectura
+                                <Link prefetch={false} className="btn btn--ghost" href="/consola">
+                                    Consola
                                 </Link>
                             </div>
                         </div>

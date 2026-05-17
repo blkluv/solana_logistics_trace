@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
+import { AppProviders } from "@/components/providers/AppProviders";
 import { DeferredSiteHeader } from "@/components/layout/SiteHeaderLoader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 
@@ -15,7 +16,7 @@ const inter = Inter({
 export const metadata: Metadata = {
     title: "TraceSol Logistics · Trazabilidad",
     description:
-        "Visibilidad logística y demo Etapa 1: actor, envío y checkpoint en Solana con sync al backend.",
+        "Trazabilidad logística: panel operativo, actor, envíos y checkpoints en Solana con sincronización al backend.",
 };
 
 export default function RootLayout({
@@ -26,9 +27,11 @@ export default function RootLayout({
     return (
         <html lang="es" className={inter.variable} suppressHydrationWarning>
             <body suppressHydrationWarning>
-                <DeferredSiteHeader />
-                {children}
-                <SiteFooter />
+                <AppProviders>
+                    <DeferredSiteHeader />
+                    {children}
+                    <SiteFooter />
+                </AppProviders>
             </body>
         </html>
     );

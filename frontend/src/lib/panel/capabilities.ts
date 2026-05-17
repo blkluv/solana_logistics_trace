@@ -19,7 +19,61 @@ export function canAccessOnChainOperationsPanel(role: string | null): boolean {
     return role !== "Inspector";
 }
 
+/** Operaciones on-chain (firma): wallet conectada y rol distinto de Inspector. */
+export function canUseChainOperationsNav(walletConnected: boolean, role: string | null): boolean {
+    return walletConnected && canAccessOnChainOperationsPanel(role);
+}
+
+/** Solo remitentes crean envíos en el flujo actual del programa. */
+export function canSenderRegisterShipments(role: string | null): boolean {
+    return role === "Sender";
+}
+
+/** Carrier, Hub y Recipient registran checkpoints on-chain. */
+export function canRecordCheckpoint(role: string | null): boolean {
+    return role === "Carrier" || role === "Hub" || role === "Recipient";
+}
+
+/** Códigos de checkpoint que cada rol debería usar en el MVP (guía UI; Anchor no restringe por rol). */
+export function checkpointTypeCodesForRole(role: string | null): readonly string[] | null {
+    switch (role) {
+        case "Carrier":
+            return ["Pickup", "Transit", "HubIn", "HubOut", "SensorData"];
+        case "Hub":
+            return ["HubIn", "HubOut", "SensorData"];
+        case "Recipient":
+            return ["DeliveryAttempt", "Delivered", "SensorData"];
+        default:
+            return null;
+    }
+}
+
+export function recordCheckpointRoleHint(role: string | null): string {
+    switch (role) {
+        case "Carrier":
+            return "Como transportista registra recogida, tránsito y paso por hub. No use entrega final (eso corresponde al destinatario).";
+        case "Hub":
+            return "Como hub registre entrada y salida del nodo y lecturas de sensor si aplica.";
+        case "Recipient":
+            return "Como destinatario registre intento o confirmación de entrega.";
+        default:
+            return "Registre un evento logístico firmando con su actor en esta red.";
+    }
+}
+
+/** Carrier, Hub e Inspector ven el inventario operativo completo en el API (§8.2). */
+export function seesOperationalShipmentInventory(role: string | null): boolean {
+    return role === "Carrier" || role === "Hub" || role === "Inspector";
+}
+
 /** Enlaces de envíos requieren wallet conectada (query `wallet` obligatoria en API). */
 export function canOpenShipmentTracker(walletConnected: boolean): boolean {
     return walletConnected;
+}
+
+export function roleDisplayName(role: string | null): string {
+    if (!role) {
+        return "Sin rol en backend";
+    }
+    return role;
 }
