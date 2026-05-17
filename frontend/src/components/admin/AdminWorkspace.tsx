@@ -166,6 +166,7 @@ export function AdminWorkspace() {
                             shipmentPda={recordShipmentPda}
                             onChainShipmentId={recordShipment.onChainShipmentId}
                             apiBaseUrl={cfg.apiBaseUrl}
+                            role={role}
                             onSuccess={() => void onFormSuccess()}
                         />
                     ) : (

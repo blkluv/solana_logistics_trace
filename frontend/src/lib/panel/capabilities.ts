@@ -34,6 +34,33 @@ export function canRecordCheckpoint(role: string | null): boolean {
     return role === "Carrier" || role === "Hub" || role === "Recipient";
 }
 
+/** Códigos de checkpoint que cada rol debería usar en el MVP (guía UI; Anchor no restringe por rol). */
+export function checkpointTypeCodesForRole(role: string | null): readonly string[] | null {
+    switch (role) {
+        case "Carrier":
+            return ["Pickup", "Transit", "HubIn", "HubOut", "SensorData"];
+        case "Hub":
+            return ["HubIn", "HubOut", "SensorData"];
+        case "Recipient":
+            return ["DeliveryAttempt", "Delivered", "SensorData"];
+        default:
+            return null;
+    }
+}
+
+export function recordCheckpointRoleHint(role: string | null): string {
+    switch (role) {
+        case "Carrier":
+            return "Como transportista registra recogida, tránsito y paso por hub. No use entrega final (eso corresponde al destinatario).";
+        case "Hub":
+            return "Como hub registre entrada y salida del nodo y lecturas de sensor si aplica.";
+        case "Recipient":
+            return "Como destinatario registre intento o confirmación de entrega.";
+        default:
+            return "Registre un evento logístico firmando con su actor en esta red.";
+    }
+}
+
 /** Carrier, Hub e Inspector ven el inventario operativo completo en el API (§8.2). */
 export function seesOperationalShipmentInventory(role: string | null): boolean {
     return role === "Carrier" || role === "Hub" || role === "Inspector";

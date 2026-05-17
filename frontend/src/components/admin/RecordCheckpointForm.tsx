@@ -13,6 +13,10 @@ import {
     userFacingChainError,
     userMessageForSyncFailure,
 } from "@/lib/panel/etapa1UserMessages";
+import {
+    checkpointTypeCodesForRole,
+    recordCheckpointRoleHint,
+} from "@/lib/panel/capabilities";
 import type { CatalogOptionRow } from "@/lib/solana/catalogCodeMap";
 import { confirmSerializedTx } from "@/lib/solana/confirmSerializedTx";
 import type { CheckpointTypeCode } from "@/lib/solana/ix";
@@ -37,6 +41,7 @@ export type RecordCheckpointFormProps = {
     shipmentPda: PublicKey;
     onChainShipmentId: string;
     apiBaseUrl: string;
+    role: string | null;
     onSuccess: () => void;
 };
 
@@ -47,6 +52,7 @@ export function RecordCheckpointForm({
     shipmentPda,
     onChainShipmentId,
     apiBaseUrl,
+    role,
     onSuccess,
 }: RecordCheckpointFormProps) {
     const cfg = useMemo(() => getPublicConfig(), []);
@@ -68,7 +74,18 @@ export function RecordCheckpointForm({
     const [busy, setBusy] = useState(false);
     const [banner, setBanner] = useState<{ kind: "ok" | "err" | "info"; text: string } | null>(null);
 
-    const cpRows = apiCpRows ?? FALLBACK_CP_ROWS;
+    const allCpRows = apiCpRows ?? FALLBACK_CP_ROWS;
+    const allowedCodes = checkpointTypeCodesForRole(role);
+    const cpRows = useMemo(() => {
+        if (!allowedCodes) {
+            return allCpRows;
+        }
+        const filtered = allCpRows.filter((o) => allowedCodes.includes(o.code));
+        return filtered.length > 0 ? filtered : allCpRows;
+    }, [allCpRows, allowedCodes]);
+
+    const selectedCpType =
+        cpRows.find((o) => o.value === cpType)?.value ?? cpRows[0]?.value ?? Cp.Pickup;
 
     useEffect(() => {
         let cancel = false;
@@ -121,7 +138,7 @@ export function RecordCheckpointForm({
                     authority: payer,
                     shipment: shipmentPda,
                     nextCheckpointIndex: nextCp,
-                    checkpointType: cpType,
+                    checkpointType: selectedCpType,
                     location: cpLocation.trim(),
                     latitude: latNum,
                     longitude: lngNum,
@@ -134,10 +151,11 @@ export function RecordCheckpointForm({
                 const r = await postCheckpointsSync(apiBaseUrl, { tx_hash: sig });
                 if (r.ok) {
                     setBanner({ kind: "ok", text: syncSuccessCopy.checkpoint });
+                    onSuccess();
                 } else {
                     setBanner({
                         kind: "err",
-                        text: userMessageForSyncFailure("el evento", r.status, r.json),
+                        text: `${userMessageForSyncFailure("el evento", r.status, r.json)} La transacción on-chain sí se confirmó (${sig.slice(0, 8)}…).`,
                     });
                 }
             } else {
@@ -145,8 +163,8 @@ export function RecordCheckpointForm({
                     kind: "info",
                     text: "Evento registrado en cadena. Configure la API para sincronizar.",
                 });
+                onSuccess();
             }
-            onSuccess();
         } catch (e) {
             const m = e instanceof Error ? e.message : String(e);
             setBanner({ kind: "err", text: userFacingChainError("record_checkpoint", m) });
@@ -158,7 +176,7 @@ export function RecordCheckpointForm({
         programId,
         payer,
         shipmentPda,
-        cpType,
+        selectedCpType,
         cpLocation,
         lat,
         lng,
@@ -184,7 +202,14 @@ export function RecordCheckpointForm({
         >
             <p className="text-sm text-muted mb-2">
                 Envío on-chain <span className="mono">#{onChainShipmentId}</span>
+                {role ? (
+                    <>
+                        {" "}
+                        · rol <span className="badge badge--neutral">{role}</span>
+                    </>
+                ) : null}
             </p>
+            <p className="text-sm text-muted mb-2">{recordCheckpointRoleHint(role)}</p>
             <p className="text-sm text-muted mb-2">{footnote}</p>
 
             <div className="form-row">
@@ -193,7 +218,7 @@ export function RecordCheckpointForm({
                     <select
                         id="admin-cp-type"
                         className="select"
-                        value={cpType}
+                        value={selectedCpType}
                         disabled={catalogsLoading || busy}
                         onChange={(e) => setCpType(Number(e.target.value) as CheckpointTypeCode)}
                     >

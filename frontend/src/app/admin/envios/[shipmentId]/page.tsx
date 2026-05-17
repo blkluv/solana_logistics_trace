@@ -123,6 +123,7 @@ export default function AdminShipmentDetailPage() {
                         shipmentPda={shipmentPda}
                         onChainShipmentId={detail.onChainShipmentId}
                         apiBaseUrl={cfg.apiBaseUrl}
+                        role={role}
                         onSuccess={() => void onRecordSuccess()}
                     />
                 ) : (
