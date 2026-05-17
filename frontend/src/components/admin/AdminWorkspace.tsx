@@ -16,7 +16,7 @@ import {
     type ShipmentFilters,
 } from "@/lib/admin/shipmentFilters";
 import { useAdminState } from "@/lib/admin/useAdminState";
-import { roleDisplayName } from "@/lib/admin/processCapabilities";
+import { roleDisplayName } from "@/lib/panel/capabilities";
 import { useWalletSession } from "@/lib/wallet/WalletSessionContext";
 
 type AdminModalKind = "create_shipment" | "record_checkpoint" | null;

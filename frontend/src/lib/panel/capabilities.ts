@@ -24,9 +24,6 @@ export function canUseChainOperationsNav(walletConnected: boolean, role: string 
     return walletConnected && canAccessOnChainOperationsPanel(role);
 }
 
-/** @deprecated Usar `canUseChainOperationsNav`. */
-export const canUseOperationsDemoNav = canUseChainOperationsNav;
-
 /** Solo remitentes crean envíos en el flujo actual del programa. */
 export function canSenderRegisterShipments(role: string | null): boolean {
     return role === "Sender";
@@ -40,4 +37,11 @@ export function canRecordCheckpoint(role: string | null): boolean {
 /** Enlaces de envíos requieren wallet conectada (query `wallet` obligatoria en API). */
 export function canOpenShipmentTracker(walletConnected: boolean): boolean {
     return walletConnected;
+}
+
+export function roleDisplayName(role: string | null): string {
+    if (!role) {
+        return "Sin rol en backend";
+    }
+    return role;
 }

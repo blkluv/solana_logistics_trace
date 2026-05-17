@@ -104,6 +104,3 @@ export function useAdminState() {
         resolveShipmentPda,
     };
 }
-
-/** @deprecated Use `useAdminState`. */
-export const useAdminProcessState = useAdminState;

@@ -5,6 +5,7 @@ import {
     canSenderRegisterShipments,
     canUseChainOperationsNav,
     isKnownActorRole,
+    roleDisplayName,
 } from "./capabilities";
 
 describe("panel capabilities", () => {
@@ -31,5 +32,10 @@ describe("panel capabilities", () => {
         expect(canRecordCheckpoint("Recipient")).toBe(true);
         expect(canRecordCheckpoint("Sender")).toBe(false);
         expect(canRecordCheckpoint("Inspector")).toBe(false);
+    });
+
+    it("formats role display name", () => {
+        expect(roleDisplayName("Sender")).toBe("Sender");
+        expect(roleDisplayName(null)).toBe("Sin rol en backend");
     });
 });

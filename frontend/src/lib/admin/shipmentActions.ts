@@ -6,6 +6,9 @@ import {
     canRecordCheckpoint,
     canSenderRegisterShipments,
 } from "@/lib/panel/capabilities";
+import { statusBadgeClass } from "@/lib/shipments/display";
+
+export { statusBadgeClass };
 
 export type ShipmentCardActionId = "view_detail" | "record_event";
 
@@ -75,17 +78,4 @@ export function canCreateShipmentAction(params: {
         return { enabled: false, reason: "Solo el rol Sender puede registrar envíos." };
     }
     return { enabled: true };
-}
-
-export function statusBadgeClass(status: string): string {
-    switch (status) {
-        case "Delivered":
-            return "badge badge--success";
-        case "Cancelled":
-            return "badge badge--danger";
-        case "OutForDelivery":
-            return "badge badge--info";
-        default:
-            return "badge badge--neutral";
-    }
 }
