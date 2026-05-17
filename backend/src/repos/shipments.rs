@@ -3,6 +3,9 @@ use sqlx::postgres::PgRow;
 use sqlx::{Error as SqlxError, FromRow, PgPool, Row};
 use uuid::Uuid;
 
+use crate::access::operational_roles_see_all_shipments;
+use crate::repos::actors;
+
 /// Row for `GET /shipments?wallet=` list responses.
 #[derive(Debug)]
 pub struct ShipmentListRow {
@@ -65,7 +68,7 @@ impl<'r> FromRow<'r, PgRow> for ShipmentDetailRow {
     }
 }
 
-pub async fn list_shipments_for_wallet(
+pub async fn list_shipments_as_participant(
     pool: &PgPool,
     wallet: &str,
 ) -> Result<Vec<ShipmentListRow>, sqlx::Error> {
@@ -77,6 +80,47 @@ pub async fn list_shipments_for_wallet(
     )
     .bind(wallet)
     .fetch_all(pool)
+    .await
+}
+
+pub async fn list_all_shipments(pool: &PgPool) -> Result<Vec<ShipmentListRow>, sqlx::Error> {
+    sqlx::query_as::<_, ShipmentListRow>(
+        r#"SELECT id, on_chain_shipment_id, status, product, created_at, requires_cold_chain
+           FROM shipments
+           ORDER BY created_at DESC"#,
+    )
+    .fetch_all(pool)
+    .await
+}
+
+pub async fn list_shipments_for_wallet(
+    pool: &PgPool,
+    wallet: &str,
+) -> Result<Vec<ShipmentListRow>, sqlx::Error> {
+    let role = actors::select_role_for_wallet(pool, wallet).await?;
+    if role
+        .as_deref()
+        .is_some_and(operational_roles_see_all_shipments)
+    {
+        list_all_shipments(pool).await
+    } else {
+        list_shipments_as_participant(pool, wallet).await
+    }
+}
+
+pub async fn select_shipment_detail_by_id(
+    pool: &PgPool,
+    shipment_id: Uuid,
+) -> Result<Option<ShipmentDetailRow>, sqlx::Error> {
+    sqlx::query_as::<_, ShipmentDetailRow>(
+        r#"SELECT id, on_chain_shipment_id, sender_wallet, recipient_wallet, product, origin,
+                  destination, status, requires_cold_chain, checkpoint_count, incident_count,
+                  created_at, delivered_at
+           FROM shipments
+           WHERE id = $1"#,
+    )
+    .bind(shipment_id)
+    .fetch_optional(pool)
     .await
 }
 
@@ -96,6 +140,22 @@ pub async fn select_shipment_detail_for_participant(
     .bind(wallet)
     .fetch_optional(pool)
     .await
+}
+
+pub async fn select_shipment_detail_for_wallet(
+    pool: &PgPool,
+    shipment_id: Uuid,
+    wallet: &str,
+) -> Result<Option<ShipmentDetailRow>, sqlx::Error> {
+    let role = actors::select_role_for_wallet(pool, wallet).await?;
+    if role
+        .as_deref()
+        .is_some_and(operational_roles_see_all_shipments)
+    {
+        select_shipment_detail_by_id(pool, shipment_id).await
+    } else {
+        select_shipment_detail_for_participant(pool, shipment_id, wallet).await
+    }
 }
 
 pub async fn id_by_creation_tx_hash(
