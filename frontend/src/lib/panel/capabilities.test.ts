@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
     canRecordCheckpoint,
+    checkpointTypeCodesForRole,
     canSenderRegisterShipments,
     canUseChainOperationsNav,
     isKnownActorRole,
@@ -33,6 +34,13 @@ describe("panel capabilities", () => {
         expect(canRecordCheckpoint("Recipient")).toBe(true);
         expect(canRecordCheckpoint("Sender")).toBe(false);
         expect(canRecordCheckpoint("Inspector")).toBe(false);
+    });
+
+    it("maps checkpoint types per logistics role", () => {
+        expect(checkpointTypeCodesForRole("Carrier")).toContain("Pickup");
+        expect(checkpointTypeCodesForRole("Carrier")).not.toContain("Delivered");
+        expect(checkpointTypeCodesForRole("Recipient")).toContain("Delivered");
+        expect(checkpointTypeCodesForRole("Sender")).toBeNull();
     });
 
     it("grants operational inventory visibility to Carrier, Hub, and Inspector", () => {
