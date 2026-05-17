@@ -21,6 +21,8 @@ export type WalletSessionContextValue = {
     connectError: string | null;
     connect: () => Promise<void>;
     disconnect: () => Promise<void>;
+    /** Vuelve a consultar `GET /actors/me` tras registrar actor o sync. */
+    refreshActor: () => Promise<void>;
 };
 
 const WalletSessionContext = createContext<WalletSessionContextValue | null>(null);
@@ -57,6 +59,25 @@ export function WalletSessionProvider({ children }: { children: ReactNode }) {
         void Promise.resolve().then(() => void trySilentConnect());
     }, [trySilentConnect]);
 
+    const refreshActor = useCallback(async () => {
+        if (!apiBaseUrl || !wallet) {
+            setRole(null);
+            setActorLoading(false);
+            return;
+        }
+        setActorLoading(true);
+        try {
+            const res = await getActorMe(apiBaseUrl, wallet);
+            if (res.ok) {
+                setRole(res.data.role);
+            } else {
+                setRole(null);
+            }
+        } finally {
+            setActorLoading(false);
+        }
+    }, [apiBaseUrl, wallet]);
+
     useEffect(() => {
         if (!apiBaseUrl || !wallet) {
             void Promise.resolve().then(() => {
@@ -68,25 +89,13 @@ export function WalletSessionProvider({ children }: { children: ReactNode }) {
         let cancelled = false;
         void Promise.resolve().then(() => {
             if (!cancelled) {
-                setActorLoading(true);
+                void refreshActor();
             }
         });
-        void (async () => {
-            const res = await getActorMe(apiBaseUrl, wallet);
-            if (cancelled) {
-                return;
-            }
-            setActorLoading(false);
-            if (res.ok) {
-                setRole(res.data.role);
-            } else {
-                setRole(null);
-            }
-        })();
         return () => {
             cancelled = true;
         };
-    }, [apiBaseUrl, wallet]);
+    }, [apiBaseUrl, wallet, refreshActor]);
 
     const connect = useCallback(async () => {
         setConnectError(null);
@@ -123,8 +132,9 @@ export function WalletSessionProvider({ children }: { children: ReactNode }) {
             connectError,
             connect,
             disconnect,
+            refreshActor,
         }),
-        [wallet, role, actorLoading, connectError, connect, disconnect],
+        [wallet, role, actorLoading, connectError, connect, disconnect, refreshActor],
     );
 
     return (

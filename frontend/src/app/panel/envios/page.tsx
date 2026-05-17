@@ -23,7 +23,7 @@ export default function PanelEnviosPage() {
 
     const senderCta =
         canSenderRegisterShipments(role) && wallet ? (
-            <Link prefetch={false} className="btn btn--primary btn--sm" href="/demo">
+            <Link prefetch={false} className="btn btn--primary btn--sm" href="/admin">
                 Nuevo envío
             </Link>
         ) : null;

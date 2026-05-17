@@ -26,11 +26,6 @@ export function SiteFooter() {
                                     Panel Admin
                                 </Link>
                             </li>
-                            <li>
-                                <Link prefetch={false} href="/demo">
-                                    Operaciones en cadena
-                                </Link>
-                            </li>
                         </ul>
                     </div>
                     <div className="footer-col">

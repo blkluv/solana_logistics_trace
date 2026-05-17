@@ -134,7 +134,7 @@ export function PanelRoleDashboard() {
 
             {showSenderCta && wallet && cfg.apiBaseUrl?.trim() && !actorLoading && (
                 <p className="mt-2 mb-0">
-                    <Link prefetch={false} className="btn btn--primary btn--sm" href="/demo">
+                    <Link prefetch={false} className="btn btn--primary btn--sm" href="/admin">
                         Nuevo envío
                     </Link>
                     <span className="text-sm text-muted ms-2">

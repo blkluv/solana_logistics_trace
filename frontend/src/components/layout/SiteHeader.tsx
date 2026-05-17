@@ -140,7 +140,7 @@ export function SiteHeader() {
                         TraceSol Logistics
                     </Link>
                     <nav className="nav-main" aria-label="Principal">
-                        {NAV_SPECS.map(renderNavLink)}
+                        {NAV_SPECS.filter((spec) => spec.href !== "/admin" || wallet).map(renderNavLink)}
                     </nav>
                     <div className="header-inner__end">
                         <div className="header-wallet" aria-label="Wallet">
@@ -228,7 +228,7 @@ export function SiteHeader() {
                 }}
             >
                 <div className="mobile-nav__panel">
-                    {NAV_SPECS.map((spec) => {
+                    {NAV_SPECS.filter((spec) => spec.href !== "/admin" || wallet).map((spec) => {
                         const active =
                             spec.href === "/"
                                 ? pathname === "/"

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { canAccessOnChainOperationsPanel, isKnownActorRole } from "@/lib/panel/capabilities";
+import { isKnownActorRole } from "@/lib/panel/capabilities";
 import { useWalletSession } from "@/lib/wallet/WalletSessionContext";
 
 function linkClass(active: boolean): string {
@@ -12,14 +12,11 @@ function linkClass(active: boolean): string {
 
 export function PanelEtapa2Rail() {
     const pathname = usePathname();
-    const { role, actorLoading } = useWalletSession();
+    const { wallet, role, actorLoading } = useWalletSession();
 
     const resumenActive = pathname === "/panel" || pathname === "/panel/";
     const enviosActive = pathname.startsWith("/panel/envios");
     const adminActive = pathname.startsWith("/admin");
-    const opsActive = pathname.startsWith("/demo");
-    const showOps = canAccessOnChainOperationsPanel(role);
-
     return (
         <aside className="panel-etapa2-rail" aria-label="Navegación del panel">
             <div className="panel-etapa2-rail__brand">Panel operativo</div>
@@ -38,14 +35,11 @@ export function PanelEtapa2Rail() {
                 <Link prefetch={false} className={linkClass(enviosActive)} href="/panel/envios">
                     Envíos
                 </Link>
-                {showOps && (
-                    <Link prefetch={false} className={linkClass(opsActive)} href="/demo">
-                        Operaciones
+                {wallet ? (
+                    <Link prefetch={false} className={linkClass(adminActive)} href="/admin">
+                        Admin
                     </Link>
-                )}
-                <Link prefetch={false} className={linkClass(adminActive)} href="/admin">
-                    Admin
-                </Link>
+                ) : null}
                 <Link prefetch={false} className={linkClass(pathname.startsWith("/consola"))} href="/consola">
                     Consola
                 </Link>

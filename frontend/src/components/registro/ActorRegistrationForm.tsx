@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Connection, PublicKey } from "@solana/web3.js";
 
-import Link from "next/link";
-
 import { apiBaseHasV1Prefix, normalizeApiBaseUrl } from "@/lib/api/backendConnectivity";
 import { loadActorRoleSelectOptions } from "@/lib/api/catalogs";
 import { postActorsSync } from "@/lib/api/sync";
@@ -32,7 +30,19 @@ const FALLBACK_ACTOR_ROWS: CatalogOptionRow<ActorRoleCode>[] = [
     { code: "Inspector", label: "Inspector", value: Role.Inspector },
 ];
 
-export function ActorRegistrationForm() {
+export type ActorRegistrationFormProps = {
+    /** Sin card exterior de página /registro. */
+    embedded?: boolean;
+    onSuccess?: () => void;
+    /** Si el programa no está activo, abrir paso de inicialización en admin. */
+    onOpenInitialize?: () => void;
+};
+
+export function ActorRegistrationForm({
+    embedded = false,
+    onSuccess,
+    onOpenInitialize,
+}: ActorRegistrationFormProps = {}) {
     const cfg = useMemo(() => getPublicConfig(), []);
     const programId = cfg.programPublicKey;
     const apiBaseTrimmed = useMemo(
@@ -45,7 +55,7 @@ export function ActorRegistrationForm() {
     );
 
     const connection = useMemo(() => new Connection(cfg.rpcUrl, "confirmed"), [cfg.rpcUrl]);
-    const { wallet } = useWalletSession();
+    const { wallet, refreshActor } = useWalletSession();
     const payer = useMemo(() => (wallet ? new PublicKey(wallet) : null), [wallet]);
 
     const [prog, setProg] = useState<Awaited<ReturnType<typeof fetchProgramConfig>>>(null);
@@ -242,6 +252,8 @@ export function ActorRegistrationForm() {
             }
             await refreshProg();
             setActorAccountExists(true);
+            await refreshActor();
+            onSuccess?.();
         } catch (e) {
             const m = e instanceof Error ? e.message : String(e);
             setBanner({ kind: "err", text: userFacingChainError("register_actor", m) });
@@ -259,12 +271,13 @@ export function ActorRegistrationForm() {
         actorLocation,
         cfg.apiBaseUrl,
         refreshProg,
+        refreshActor,
+        onSuccess,
     ]);
 
-    return (
-        <div className="registro-form" data-testid="actor-registration-form">
-            <form
-                className="registro-form__inner"
+    const formEl = (
+        <form
+            className={embedded ? "admin-form" : "registro-form__inner"}
                 onSubmit={(e) => {
                     e.preventDefault();
                     void onSubmit();
@@ -321,11 +334,15 @@ export function ActorRegistrationForm() {
                 {hintText && !busy ? (
                     <p className="registro-form__hint text-sm text-muted mb-0">{hintText}</p>
                 ) : null}
-                {!prog && payer && programId ? (
+                {!prog && payer && programId && onOpenInitialize ? (
                     <p className="registro-form__aux text-xs text-muted mb-0">
-                        <Link prefetch={false} href="/demo">
-                            Activar programa (una vez) — operaciones en cadena
-                        </Link>
+                        <button
+                            type="button"
+                            className="btn btn--ghost btn--sm"
+                            onClick={onOpenInitialize}
+                        >
+                            Activar programa (una vez)
+                        </button>
                     </p>
                 ) : null}
                 {banner ? (
@@ -336,7 +353,16 @@ export function ActorRegistrationForm() {
                         {banner.text}
                     </p>
                 ) : null}
-            </form>
+        </form>
+    );
+
+    if (embedded) {
+        return formEl;
+    }
+
+    return (
+        <div className="registro-form" data-testid="actor-registration-form">
+            {formEl}
         </div>
     );
 }

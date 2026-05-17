@@ -1,5 +1,5 @@
 /**
- * Contenedor del área admin: mismo ritmo vertical que el resto del sitio (mockup TraceSol).
+ * Área de administración: layout amplio para el proceso operativo.
  */
 export default function AdminLayout({
     children,
@@ -7,8 +7,8 @@ export default function AdminLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <main className="page-main">
-            <div className="shell content-narrow">{children}</div>
+        <main className="page-main page-main--admin">
+            <div className="shell">{children}</div>
         </main>
     );
 }
