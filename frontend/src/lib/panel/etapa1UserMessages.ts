@@ -62,6 +62,12 @@ export function userMessageForSyncFailure(
             return mapped;
         }
     }
+    if (status === 409 && api) {
+        const lower = api.toLowerCase();
+        if (lower.includes("different transaction")) {
+            return `El actor ya existía en el backend con otra transacción. Si reinició el validador, vuelva a registrar en cadena y sincronice de nuevo (el servidor actualizará el registro).`;
+        }
+    }
     if (status === 422) {
         return `Los datos de ${entityLabel} no pudieron validarse. Revise la operación e inténtelo de nuevo.`;
     }

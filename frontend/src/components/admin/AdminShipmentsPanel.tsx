@@ -35,8 +35,10 @@ export function AdminShipmentsPanel({
     const createAction = canCreateShipmentAction({
         role,
         hasWallet,
+        programConfigured,
         programActive,
         actorOnChain,
+        actorLoading,
     });
 
     return (
@@ -53,13 +55,19 @@ export function AdminShipmentsPanel({
                 <button
                     type="button"
                     className="btn btn--primary"
-                    disabled={!createAction.enabled}
                     title={createAction.reason}
+                    aria-disabled={!createAction.enabled}
                     onClick={onCreateShipment}
                 >
                     Registrar envío
                 </button>
             </header>
+
+            {!createAction.enabled && createAction.reason ? (
+                <p className="admin-shipments-panel__gate text-sm text-muted mb-0" role="status">
+                    {createAction.reason}
+                </p>
+            ) : null}
 
             {loading ? (
                 <p className="admin-shipments-panel__status text-muted">Cargando envíos…</p>

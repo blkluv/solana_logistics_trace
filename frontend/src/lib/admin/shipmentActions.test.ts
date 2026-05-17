@@ -48,10 +48,10 @@ describe("shipmentCardActions", () => {
 });
 
 describe("canRecordCheckpointAction", () => {
-    it("enables while actor on-chain is still unknown", () => {
-        expect(
-            canRecordCheckpointAction({ ...ready, role: "Carrier", actorOnChain: null }).enabled,
-        ).toBe(true);
+    it("disables while actor on-chain is still unknown", () => {
+        const result = canRecordCheckpointAction({ ...ready, role: "Carrier", actorOnChain: null });
+        expect(result.enabled).toBe(false);
+        expect(result.reason).toMatch(/verificar el actor/);
     });
 
     it("disables while actor profile is loading", () => {
@@ -68,6 +68,7 @@ describe("canRecordCheckpointAction", () => {
 describe("canCreateShipmentAction", () => {
     const createReady = {
         hasWallet: true,
+        programConfigured: true,
         programActive: true,
         actorOnChain: true as boolean | null,
     };
@@ -80,6 +81,36 @@ describe("canCreateShipmentAction", () => {
         const result = canCreateShipmentAction({ ...createReady, role: "Carrier" });
         expect(result.enabled).toBe(false);
         expect(result.reason).toContain("Sender");
+    });
+
+    it("waits while actor profile is loading", () => {
+        const result = canCreateShipmentAction({
+            ...createReady,
+            role: "Sender",
+            actorLoading: true,
+        });
+        expect(result.enabled).toBe(false);
+        expect(result.reason).toMatch(/Cargando/);
+    });
+
+    it("guides Sender when actor missing on chain", () => {
+        const result = canCreateShipmentAction({
+            ...createReady,
+            role: "Sender",
+            actorOnChain: false,
+        });
+        expect(result.enabled).toBe(false);
+        expect(result.reason).toMatch(/no en la cadena/);
+    });
+
+    it("prompts registration when role is unknown", () => {
+        const result = canCreateShipmentAction({
+            ...createReady,
+            role: null,
+            actorOnChain: true,
+        });
+        expect(result.enabled).toBe(false);
+        expect(result.reason).toMatch(/registro/);
     });
 });
 

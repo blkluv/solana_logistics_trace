@@ -55,7 +55,7 @@ export function ActorRegistrationForm({
     );
 
     const connection = useMemo(() => new Connection(cfg.rpcUrl, "confirmed"), [cfg.rpcUrl]);
-    const { wallet, refreshActor } = useWalletSession();
+    const { wallet, role: backendRole, refreshActor } = useWalletSession();
     const payer = useMemo(() => (wallet ? new PublicKey(wallet) : null), [wallet]);
 
     const [prog, setProg] = useState<Awaited<ReturnType<typeof fetchProgramConfig>>>(null);
@@ -295,6 +295,13 @@ export function ActorRegistrationForm({
                         (cada wallet solo puede tener un actor; use otra cuenta en Phantom para
                         registrar otra)
                     </span>
+                </p>
+            ) : null}
+            {backendRole && actorAccountExists === false && payer && prog ? (
+                <p className="text-sm mb-2" role="status">
+                    El backend ya tiene un actor <strong>{backendRole}</strong> para esta wallet,
+                    pero no existe en la cadena (común tras reiniciar el validador). Vuelva a
+                    registrar y sincronizar con la misma wallet.
                 </p>
             ) : null}
                 <div className="form-group">
