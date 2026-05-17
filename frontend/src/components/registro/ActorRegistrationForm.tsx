@@ -234,11 +234,13 @@ export function ActorRegistrationForm({
                     location: actorLocation.trim(),
                 }),
             );
+            let syncOk = true;
             if (cfg.apiBaseUrl?.trim()) {
                 const r = await postActorsSync(cfg.apiBaseUrl, { tx_hash: sig });
                 if (r.ok) {
                     setBanner({ kind: "ok", text: syncSuccessCopy.actor });
                 } else {
+                    syncOk = false;
                     setBanner({
                         kind: "err",
                         text: userMessageForSyncFailure("el actor", r.status, r.json),
@@ -253,10 +255,11 @@ export function ActorRegistrationForm({
             await refreshProg();
             setActorAccountExists(true);
             await refreshActor();
-            onSuccess?.();
+            if (syncOk) {
+                onSuccess?.();
+            }
         } catch (e) {
-            const m = e instanceof Error ? e.message : String(e);
-            setBanner({ kind: "err", text: userFacingChainError("register_actor", m) });
+            setBanner({ kind: "err", text: userFacingChainError("register_actor", e) });
         } finally {
             setBusy(false);
         }
@@ -283,6 +286,17 @@ export function ActorRegistrationForm({
                     void onSubmit();
                 }}
             >
+            {wallet ? (
+                <p className="registro-form__wallet text-sm mb-2" role="status">
+                    Se registrará la wallet conectada en Phantom:{" "}
+                    <span className="mono break-all">{wallet}</span>
+                    <span className="text-muted">
+                        {" "}
+                        (cada wallet solo puede tener un actor; use otra cuenta en Phantom para
+                        registrar otra)
+                    </span>
+                </p>
+            ) : null}
                 <div className="form-group">
                     <label htmlFor="registro-role">Rol</label>
                     <select

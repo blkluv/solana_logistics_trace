@@ -5,6 +5,10 @@
 import { PublicKey } from "@solana/web3.js";
 
 import type { BackendHealthResult } from "@/lib/api/backendConnectivity";
+import {
+    extractTransactionErrorText,
+    userMessageFromTransactionError,
+} from "@/lib/solana/parseTransactionError";
 
 /** Validación del campo destinatario (clave pública). */
 export function recipientFieldValidationError(recipientTrimmed: string): string | null {
@@ -91,7 +95,15 @@ export const adminHints = {
     shipmentPdaMissing: "Registre antes un envío para poder añadir eventos logísticos.",
 } as const;
 
-export function userFacingChainError(step: ChainStepKey, rawMessage: string): string {
+export function userFacingChainError(step: ChainStepKey, rawMessageOrError: string | unknown): string {
+    const rawMessage =
+        typeof rawMessageOrError === "string"
+            ? rawMessageOrError
+            : extractTransactionErrorText(rawMessageOrError);
+    const txHint = userMessageFromTransactionError(rawMessage);
+    if (txHint) {
+        return txHint;
+    }
     const m = rawMessage;
     if (step === "register_actor" && m.includes("already in use")) {
         return "Esta cartera ya tiene un actor registrado. Continúe con el registro de envíos o utilice otra cartera.";
@@ -104,6 +116,14 @@ export function userFacingChainError(step: ChainStepKey, rawMessage: string): st
     }
     if (m.includes("ProgramConfig")) {
         return "Primero debe activarse el programa en esta red.";
+    }
+    if (
+        m.includes("AccountNotInitialized") ||
+        m.includes("sender_actor") ||
+        m.includes("0xbc4") ||
+        /account.*not.*initialized/i.test(m)
+    ) {
+        return "Registre su actor como remitente (Sender) en esta red antes de crear envíos.";
     }
     if (m.includes("Usuario rechazó") || m.includes("rejected") || m.includes("cancelled")) {
         return "Operación cancelada en la billetera.";
@@ -119,6 +139,10 @@ export function userFacingChainError(step: ChainStepKey, rawMessage: string): st
     }
     if (m.includes("PublicKey") || m.includes("destinatario")) {
         return m;
+    }
+    const detail = rawMessage.replace(/\s+/g, " ").trim().slice(0, 200);
+    if (detail) {
+        return `No se pudo completar la operación. Detalle: ${detail}`;
     }
     return "No se pudo completar la operación. Revise los datos e inténtelo de nuevo.";
 }

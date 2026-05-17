@@ -24,15 +24,29 @@ export function canUseChainOperationsNav(walletConnected: boolean, role: string 
     return walletConnected && canAccessOnChainOperationsPanel(role);
 }
 
-/** @deprecated Usar `canUseChainOperationsNav`. */
-export const canUseOperationsDemoNav = canUseChainOperationsNav;
-
 /** Solo remitentes crean envíos en el flujo actual del programa. */
 export function canSenderRegisterShipments(role: string | null): boolean {
     return role === "Sender";
 }
 
+/** Carrier, Hub y Recipient registran checkpoints on-chain. */
+export function canRecordCheckpoint(role: string | null): boolean {
+    return role === "Carrier" || role === "Hub" || role === "Recipient";
+}
+
+/** Carrier, Hub e Inspector ven el inventario operativo completo en el API (§8.2). */
+export function seesOperationalShipmentInventory(role: string | null): boolean {
+    return role === "Carrier" || role === "Hub" || role === "Inspector";
+}
+
 /** Enlaces de envíos requieren wallet conectada (query `wallet` obligatoria en API). */
 export function canOpenShipmentTracker(walletConnected: boolean): boolean {
     return walletConnected;
+}
+
+export function roleDisplayName(role: string | null): string {
+    if (!role) {
+        return "Sin rol en backend";
+    }
+    return role;
 }
