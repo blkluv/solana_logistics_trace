@@ -43,7 +43,7 @@ pub async fn list_shipment_checkpoints(
     q: WalletQuery<'_>,
 ) -> Result<Json<Vec<CheckpointItemJson>>, (Status, Json<Value>)> {
     let w = require_wallet_form(&q)?;
-    if shipments::select_shipment_detail_for_participant(pool.inner(), shipment_id, w)
+    if shipments::select_shipment_detail_for_wallet(pool.inner(), shipment_id, w)
         .await
         .map_err(|_| {
             (
@@ -58,7 +58,7 @@ pub async fn list_shipment_checkpoints(
             Json(json!({"error": "shipment not found"})),
         ));
     }
-    let rows = checkpoints::list_for_shipment_participant(pool.inner(), shipment_id, w)
+    let rows = checkpoints::list_for_shipment_wallet(pool.inner(), shipment_id, w)
         .await
         .map_err(|_| {
             (
@@ -80,7 +80,7 @@ pub async fn get_shipment(
     q: WalletQuery<'_>,
 ) -> Result<Json<ShipmentDetailJson>, (Status, Json<Value>)> {
     let w = require_wallet_form(&q)?;
-    let row = shipments::select_shipment_detail_for_participant(pool.inner(), shipment_id, w)
+    let row = shipments::select_shipment_detail_for_wallet(pool.inner(), shipment_id, w)
         .await
         .map_err(|_| {
             (
@@ -94,7 +94,7 @@ pub async fn get_shipment(
             Json(json!({"error": "shipment not found"})),
         )),
         Some(r) => {
-            let cps = checkpoints::list_for_shipment_participant(pool.inner(), shipment_id, w)
+            let cps = checkpoints::list_for_shipment_wallet(pool.inner(), shipment_id, w)
                 .await
                 .map_err(|_| {
                     (

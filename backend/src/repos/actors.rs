@@ -65,6 +65,16 @@ pub async fn select_actor_row(
     .await
 }
 
+pub async fn select_role_for_wallet(
+    pool: &PgPool,
+    wallet: &str,
+) -> Result<Option<String>, sqlx::Error> {
+    sqlx::query_scalar(r#"SELECT role FROM actors WHERE wallet = $1"#)
+        .bind(wallet)
+        .fetch_optional(pool)
+        .await
+}
+
 pub async fn select_actor_optional(
     pool: &PgPool,
     wallet: &str,

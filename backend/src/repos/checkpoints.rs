@@ -4,6 +4,9 @@ use sqlx::types::Json;
 use sqlx::{Error as SqlxError, FromRow, PgPool, Postgres, Row, Transaction};
 use uuid::Uuid;
 
+use crate::access::operational_roles_see_all_shipments;
+use crate::repos::actors;
+
 pub async fn checkpoint_id_by_tx_hash(
     pool: &PgPool,
     tx_hash: &str,
@@ -60,6 +63,23 @@ impl<'r> FromRow<'r, PgRow> for CheckpointListRow {
     }
 }
 
+pub async fn list_for_shipment(
+    pool: &PgPool,
+    shipment_id: Uuid,
+) -> Result<Vec<CheckpointListRow>, sqlx::Error> {
+    sqlx::query_as::<_, CheckpointListRow>(
+        r#"SELECT c.id, c.on_chain_checkpoint_id, c.checkpoint_type, c.occurred_at, c.location,
+                  c.actor_wallet, c.temperature_centi, c.humidity, c.latitude, c.longitude,
+                  c.metadata_json, c.tx_hash
+           FROM checkpoints c
+           WHERE c.shipment_id = $1
+           ORDER BY c.occurred_at ASC"#,
+    )
+    .bind(shipment_id)
+    .fetch_all(pool)
+    .await
+}
+
 /// Checkpoints for a shipment when `wallet` is sender or recipient (§8.2).
 pub async fn list_for_shipment_participant(
     pool: &PgPool,
@@ -80,6 +100,22 @@ pub async fn list_for_shipment_participant(
     .bind(wallet)
     .fetch_all(pool)
     .await
+}
+
+pub async fn list_for_shipment_wallet(
+    pool: &PgPool,
+    shipment_id: Uuid,
+    wallet: &str,
+) -> Result<Vec<CheckpointListRow>, sqlx::Error> {
+    let role = actors::select_role_for_wallet(pool, wallet).await?;
+    if role
+        .as_deref()
+        .is_some_and(operational_roles_see_all_shipments)
+    {
+        list_for_shipment(pool, shipment_id).await
+    } else {
+        list_for_shipment_participant(pool, shipment_id, wallet).await
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
