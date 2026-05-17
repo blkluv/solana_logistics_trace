@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import {
     shipmentCardActions,
     statusBadgeClass,
@@ -12,8 +14,7 @@ export type AdminShipmentCardProps = {
     programActive: boolean;
     actorOnChain: boolean;
     hasWallet: boolean;
-    selected?: boolean;
-    onViewDetail: (shipmentId: string) => void;
+    detailHref: string;
     onRecordEvent: (shipmentId: string) => void;
 };
 
@@ -23,8 +24,7 @@ export function AdminShipmentCard({
     programActive,
     actorOnChain,
     hasWallet,
-    selected,
-    onViewDetail,
+    detailHref,
     onRecordEvent,
 }: AdminShipmentCardProps) {
     const actions = shipmentCardActions({
@@ -33,10 +33,11 @@ export function AdminShipmentCard({
         programActive,
         actorOnChain,
     });
+    const recordAction = actions.find((a) => a.id === "record_event");
 
     return (
         <article
-            className={`admin-shipment-card card${selected ? " admin-shipment-card--selected" : ""}`}
+            className="admin-shipment-card card"
             data-testid={`admin-shipment-card-${shipment.shipmentId}`}
         >
             <div className="card__bd admin-shipment-card__bd">
@@ -50,30 +51,30 @@ export function AdminShipmentCard({
                     <time dateTime={shipment.createdAt}>{shipment.createdAt}</time>
                 </p>
                 <div className="admin-shipment-card__actions">
-                    {actions.map((action) => {
-                        const handler =
-                            action.id === "view_detail"
-                                ? () => onViewDetail(shipment.shipmentId)
-                                : () => onRecordEvent(shipment.shipmentId);
-                        return (
-                            <button
-                                key={action.id}
-                                type="button"
-                                className={
-                                    action.id === "view_detail"
-                                        ? "btn btn--ghost btn--sm"
-                                        : "btn btn--secondary btn--sm"
-                                }
-                                disabled={!action.enabled}
-                                title={action.reason}
-                                onClick={handler}
-                            >
-                                {action.label}
-                            </button>
-                        );
-                    })}
+                    <Link
+                        prefetch={false}
+                        className="btn btn--ghost btn--sm"
+                        href={detailHref}
+                    >
+                        Ver detalle
+                    </Link>
+                    {recordAction ? (
+                        <button
+                            type="button"
+                            className="btn btn--secondary btn--sm"
+                            disabled={!recordAction.enabled}
+                            title={recordAction.reason}
+                            onClick={() => onRecordEvent(shipment.shipmentId)}
+                        >
+                            {recordAction.label}
+                        </button>
+                    ) : null}
                 </div>
             </div>
         </article>
     );
+}
+
+export function adminShipmentDetailHref(shipmentId: string): string {
+    return `/admin/envios/${encodeURIComponent(shipmentId)}`;
 }

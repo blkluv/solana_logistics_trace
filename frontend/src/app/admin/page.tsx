@@ -11,8 +11,8 @@ export default function AdminHomePage() {
             <>
                 <h1 className="page-title">Administración</h1>
                 <p className="page-sub">
-                    Conecte su wallet con Phantom para acceder al centro de administración y al
-                    proceso operativo de trazabilidad.
+                    Conecte su wallet con Phantom para acceder al dashboard de envíos y eventos
+                    logísticos.
                 </p>
                 {connectError ? (
                     <p className="text-sm admin-form__err" role="alert">

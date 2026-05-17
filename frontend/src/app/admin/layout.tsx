@@ -1,5 +1,5 @@
 /**
- * Área de administración: layout amplio para el proceso operativo.
+ * Área de administración: dashboard de envíos y detalle.
  */
 export default function AdminLayout({
     children,
