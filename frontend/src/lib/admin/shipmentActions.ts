@@ -56,6 +56,12 @@ export function canRecordCheckpointAction(params: {
         }
         return { enabled: false, reason: "Registre su actor en la página de registro." };
     }
+    if (actorOnChain === null && !actorLoading) {
+        return {
+            enabled: false,
+            reason: "No se pudo verificar el actor en cadena. Compruebe la red RPC y recargue la página.",
+        };
+    }
     return { enabled: true };
 }
 
@@ -87,21 +93,49 @@ export function shipmentCardActions(params: {
 export function canCreateShipmentAction(params: {
     role: string | null;
     hasWallet: boolean;
+    programConfigured: boolean;
     programActive: boolean;
     actorOnChain: boolean | null;
+    actorLoading?: boolean;
 }): { enabled: boolean; reason?: string } {
-    const { role, hasWallet, programActive, actorOnChain } = params;
+    const { role, hasWallet, programConfigured, programActive, actorOnChain, actorLoading } = params;
+
+    if (actorLoading) {
+        return { enabled: false, reason: "Cargando perfil…" };
+    }
     if (!hasWallet) {
         return { enabled: false, reason: "Conecte la wallet." };
     }
-    if (!programActive) {
-        return { enabled: false, reason: "El programa no está activo en esta red." };
+    if (!programConfigured) {
+        return { enabled: false, reason: "El programa no está configurado en el despliegue." };
     }
-    if (actorOnChain === false) {
-        return { enabled: false, reason: "Registre su actor en la página de registro." };
+    if (!programActive) {
+        return {
+            enabled: false,
+            reason: "El programa no está activo en esta red. Use Consola → Activar programa.",
+        };
     }
     if (!canSenderRegisterShipments(role)) {
+        if (role === null) {
+            return {
+                enabled: false,
+                reason: "Registre su actor en /registro con rol Sender y sincronice con el backend.",
+            };
+        }
         return { enabled: false, reason: "Solo el rol Sender puede registrar envíos." };
+    }
+    if (actorOnChain === false) {
+        return {
+            enabled: false,
+            reason:
+                "Su actor Sender está en el backend pero no en la cadena (p. ej. tras reiniciar el validador). Vuelva a /registro con la misma wallet y sincronice.",
+        };
+    }
+    if (actorOnChain === null) {
+        return {
+            enabled: false,
+            reason: "No se pudo verificar el actor en cadena. Compruebe la red RPC y recargue la página.",
+        };
     }
     return { enabled: true };
 }

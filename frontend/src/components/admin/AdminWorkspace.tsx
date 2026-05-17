@@ -15,6 +15,7 @@ import {
     uniqueShipmentStatuses,
     type ShipmentFilters,
 } from "@/lib/admin/shipmentFilters";
+import { canCreateShipmentAction } from "@/lib/admin/shipmentActions";
 import { useAdminState } from "@/lib/admin/useAdminState";
 import { roleDisplayName } from "@/lib/panel/capabilities";
 import { useWalletSession } from "@/lib/wallet/WalletSessionContext";
@@ -87,6 +88,15 @@ export function AdminWorkspace() {
               ? "Evento logístico"
               : "";
 
+    const createGate = canCreateShipmentAction({
+        role,
+        hasWallet: Boolean(wallet),
+        programConfigured: Boolean(programId),
+        programActive,
+        actorOnChain,
+        actorLoading,
+    });
+
     return (
         <div className="admin-workspace">
             <header className="admin-page-header">
@@ -147,15 +157,25 @@ export function AdminWorkspace() {
                 onClose={closeModal}
                 size="lg"
             >
-                {openModal === "create_shipment" && programId && payer ? (
-                    <CreateShipmentForm
-                        connection={connection}
-                        programId={programId}
-                        payer={payer}
-                        apiBaseUrl={cfg.apiBaseUrl}
-                        role={role}
-                        onSuccess={() => void onFormSuccess()}
-                    />
+                {openModal === "create_shipment" ? (
+                    !createGate.enabled ? (
+                        <p className="text-sm mb-0" role="status">
+                            {createGate.reason ?? "No puede registrar envíos en este momento."}
+                        </p>
+                    ) : programId && payer ? (
+                        <CreateShipmentForm
+                            connection={connection}
+                            programId={programId}
+                            payer={payer}
+                            apiBaseUrl={cfg.apiBaseUrl}
+                            role={role}
+                            onSuccess={() => void onFormSuccess()}
+                        />
+                    ) : (
+                        <p className="text-sm text-muted mb-0" role="status">
+                            Conecte la wallet y configure el programa para continuar.
+                        </p>
+                    )
                 ) : null}
                 {openModal === "record_checkpoint" && programId && payer ? (
                     recordShipment && recordShipmentPda ? (
