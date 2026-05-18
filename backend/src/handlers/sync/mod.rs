@@ -2,10 +2,12 @@
 
 mod actor;
 mod checkpoint;
+mod incident;
 mod shipment;
 
 pub use actor::post_sync_actor;
 pub use checkpoint::post_sync_checkpoint;
+pub use incident::post_sync_incident;
 pub use shipment::post_sync_shipment;
 
 use rocket::http::Status;

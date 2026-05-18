@@ -158,6 +158,36 @@ pub async fn select_shipment_detail_for_wallet(
     }
 }
 
+pub async fn id_by_on_chain_shipment_id(
+    pool: &PgPool,
+    on_chain_shipment_id: i64,
+) -> Result<Option<Uuid>, sqlx::Error> {
+    let row = sqlx::query(r#"SELECT id FROM shipments WHERE on_chain_shipment_id = $1"#)
+        .bind(on_chain_shipment_id)
+        .fetch_optional(pool)
+        .await?;
+    match row {
+        None => Ok(None),
+        Some(r) => {
+            let id: Uuid = r.try_get("id")?;
+            Ok(Some(id))
+        }
+    }
+}
+
+pub async fn sync_incident_count(
+    pool: &PgPool,
+    shipment_id: Uuid,
+    incident_count: i32,
+) -> Result<(), sqlx::Error> {
+    sqlx::query(r#"UPDATE shipments SET incident_count = $2 WHERE id = $1"#)
+        .bind(shipment_id)
+        .bind(incident_count)
+        .execute(pool)
+        .await?;
+    Ok(())
+}
+
 pub async fn id_by_creation_tx_hash(
     pool: &PgPool,
     creation_tx_hash: &str,

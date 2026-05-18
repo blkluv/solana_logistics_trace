@@ -1,5 +1,6 @@
 pub mod borsh_accounts;
 pub mod decode;
+pub mod decode_instructions;
 pub mod discriminators;
 pub mod parse;
 pub mod rpc_http;

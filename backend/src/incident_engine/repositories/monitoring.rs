@@ -31,6 +31,21 @@ pub async fn stop_monitoring(pool: &PgPool, shipment_id: Uuid) -> Result<(), sql
     Ok(())
 }
 
+pub async fn stop_monitoring_tx(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    shipment_id: Uuid,
+) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        r#"UPDATE shipment_monitoring
+           SET status = 'stopped', stopped_at = now()
+           WHERE shipment_id = $1"#,
+    )
+    .bind(shipment_id)
+    .execute(&mut **tx)
+    .await?;
+    Ok(())
+}
+
 pub async fn list_active_shipment_ids(pool: &PgPool) -> Result<Vec<Uuid>, sqlx::Error> {
     sqlx::query_scalar(
         r#"SELECT shipment_id FROM shipment_monitoring WHERE status = 'active'"#,
