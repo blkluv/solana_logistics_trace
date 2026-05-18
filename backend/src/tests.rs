@@ -381,3 +381,23 @@ async fn actors_me_returns_400_without_wallet() {
     assert_eq!(response.status(), Status::BadRequest);
 }
 
+#[tokio::test]
+async fn public_shipment_returns_500_when_database_unreachable() {
+    let client = tracked_client_with_mock_solana(vec!["http://localhost:3000".into()]).await;
+    let response = client
+        .get("/api/v1/public/shipments/c27c4b9e-f021-4254-b39f-559de2523639")
+        .dispatch()
+        .await;
+    assert_eq!(response.status(), Status::InternalServerError);
+}
+
+#[tokio::test]
+async fn public_shipment_rejects_invalid_uuid_in_path() {
+    let client = tracked_client_with_mock_solana(vec!["http://localhost:3000".into()]).await;
+    let response = client
+        .get("/api/v1/public/shipments/not-a-valid-uuid")
+        .dispatch()
+        .await;
+    assert_eq!(response.status(), Status::UnprocessableEntity);
+}
+
