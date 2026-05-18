@@ -32,3 +32,21 @@ pub fn create_shipment_ix() -> [u8; 8] {
 pub fn record_checkpoint_ix() -> [u8; 8] {
     anchor_global_ix("record_checkpoint")
 }
+
+#[must_use]
+pub fn report_critical_incident_ix() -> [u8; 8] {
+    anchor_global_ix("report_critical_incident")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::report_critical_incident_ix;
+
+    #[test]
+    fn report_critical_incident_discriminator_matches_frontend() {
+        assert_eq!(
+            report_critical_incident_ix(),
+            [0x4b, 0x90, 0x61, 0x0e, 0xf4, 0x56, 0x8f, 0x97]
+        );
+    }
+}
