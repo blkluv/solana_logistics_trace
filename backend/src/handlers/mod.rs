@@ -1,6 +1,7 @@
 pub mod actors;
 pub mod catalogs;
 pub mod health;
+pub mod incidents;
 pub mod public_shipments;
 pub mod shipments;
 pub mod solana;

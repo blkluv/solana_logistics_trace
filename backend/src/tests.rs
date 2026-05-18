@@ -201,6 +201,16 @@ async fn catalogs_products_returns_500_when_database_unreachable() {
 }
 
 #[tokio::test]
+async fn shipment_incidents_returns_500_when_database_unreachable() {
+    let client = tracked_client_with_mock_solana(vec!["http://localhost:3000".into()]).await;
+    let response = client
+        .get("/api/v1/shipments/00000000-0000-4000-8000-000000000001/incidents?wallet=11111111111111111111111111111111")
+        .dispatch()
+        .await;
+    assert_eq!(response.status(), Status::InternalServerError);
+}
+
+#[tokio::test]
 async fn catalogs_locations_returns_500_when_database_unreachable() {
     let client = tracked_client_with_mock_solana(vec!["http://localhost:3000".into()]).await;
     let response = client
