@@ -4,40 +4,31 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 
-import { ShipmentTracker } from "@/components/panel/ShipmentTracker";
 import { getPublicConfig } from "@/lib/env";
-
-type SearchMode = "sender" | "id";
+import { isShipmentServiceUuid } from "@/lib/api/publicShipments";
 
 export default function PublicEnviosPage() {
     const router = useRouter();
     const { apiBaseUrl } = getPublicConfig();
-    const [mode, setMode] = useState<SearchMode>("sender");
-    const [senderInput, setSenderInput] = useState("");
-    const [listWallet, setListWallet] = useState<string | null>(null);
     const [shipmentIdInput, setShipmentIdInput] = useState("");
-    const [participantWallet, setParticipantWallet] = useState("");
+    const [formError, setFormError] = useState<string | null>(null);
 
-    const onSearchBySender = useCallback(
-        (e: React.FormEvent) => {
-            e.preventDefault();
-            const w = senderInput.trim();
-            setListWallet(w.length > 0 ? w : null);
-        },
-        [senderInput],
-    );
-
-    const onOpenById = useCallback(
+    const onSearch = useCallback(
         (e: React.FormEvent) => {
             e.preventDefault();
             const id = shipmentIdInput.trim();
-            const w = participantWallet.trim();
-            if (!id || !w) {
+            if (!id) {
+                setFormError("Indique el UUID del servicio.");
                 return;
             }
-            router.push(`/envios/${encodeURIComponent(id)}?wallet=${encodeURIComponent(w)}`);
+            if (!isShipmentServiceUuid(id)) {
+                setFormError("El UUID no es válido. Use el formato xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.");
+                return;
+            }
+            setFormError(null);
+            router.push(`/envios/${encodeURIComponent(id)}`);
         },
-        [router, shipmentIdInput, participantWallet],
+        [router, shipmentIdInput],
     );
 
     return (
@@ -46,8 +37,8 @@ export default function PublicEnviosPage() {
                 <div className="content-narrow">
                     <h1 className="page-title">Consulta pública de envíos</h1>
                     <p className="page-sub">
-                        Busque por wallet del remitente (listado) o por UUID del envío junto con una
-                        wallet participante autorizada en el backend.
+                        Introduzca el UUID del servicio (identificador del envío en el sistema) para ver
+                        el estado, la línea de tiempo y el mapa de eventos.
                     </p>
 
                     {!apiBaseUrl && (
@@ -57,80 +48,45 @@ export default function PublicEnviosPage() {
                     )}
 
                     <div className="card mt-2">
-                        <div className="card__hd">Criterios</div>
+                        <div className="card__hd">Buscar envío</div>
                         <div className="card__bd">
-                            <div className="segmented" role="tablist" aria-label="Modo de búsqueda">
+                            <form onSubmit={onSearch}>
+                                <div className="form-group">
+                                    <label htmlFor="ship-service-uuid">UUID del servicio</label>
+                                    <input
+                                        id="ship-service-uuid"
+                                        className="input mono"
+                                        autoComplete="off"
+                                        spellCheck={false}
+                                        placeholder="c27c4b9e-f021-4254-b39f-559de2523639"
+                                        value={shipmentIdInput}
+                                        disabled={!apiBaseUrl}
+                                        onChange={(e) => {
+                                            setShipmentIdInput(e.target.value);
+                                            setFormError(null);
+                                        }}
+                                    />
+                                    <p className="text-xs text-muted mb-0 mt-1">
+                                        Es el identificador que recibe al crear o sincronizar el envío (no
+                                        confundir con el número on-chain).
+                                    </p>
+                                </div>
+                                {formError ? (
+                                    <p className="text-sm admin-form__err mb-2" role="alert">
+                                        {formError}
+                                    </p>
+                                ) : null}
                                 <button
-                                    type="button"
-                                    className={mode === "sender" ? "is-active" : ""}
-                                    onClick={() => setMode("sender")}
+                                    type="submit"
+                                    className="btn btn--primary btn--sm"
+                                    disabled={!apiBaseUrl}
                                 >
-                                    Por remitente
+                                    Consultar envío
                                 </button>
-                                <button
-                                    type="button"
-                                    className={mode === "id" ? "is-active" : ""}
-                                    onClick={() => setMode("id")}
-                                >
-                                    Por ID de envío
-                                </button>
-                            </div>
-
-                            {mode === "sender" ? (
-                                <form className="mt-2" onSubmit={onSearchBySender}>
-                                    <div className="form-group">
-                                        <label htmlFor="sender-wallet">Wallet del remitente (base58)</label>
-                                        <input
-                                            id="sender-wallet"
-                                            className="input mono"
-                                            autoComplete="off"
-                                            placeholder="Clave pública de 32 bytes en base58"
-                                            value={senderInput}
-                                            onChange={(e) => setSenderInput(e.target.value)}
-                                        />
-                                    </div>
-                                    <button type="submit" className="btn btn--primary btn--sm">
-                                        Consultar listado
-                                    </button>
-                                </form>
-                            ) : (
-                                <form className="mt-2" onSubmit={onOpenById}>
-                                    <div className="form-group">
-                                        <label htmlFor="ship-id">UUID del envío</label>
-                                        <input
-                                            id="ship-id"
-                                            className="input mono"
-                                            autoComplete="off"
-                                            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                                            value={shipmentIdInput}
-                                            onChange={(e) => setShipmentIdInput(e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="part-wallet">Wallet participante</label>
-                                        <input
-                                            id="part-wallet"
-                                            className="input mono"
-                                            autoComplete="off"
-                                            placeholder="Requerida por la API para leer el detalle"
-                                            value={participantWallet}
-                                            onChange={(e) => setParticipantWallet(e.target.value)}
-                                        />
-                                    </div>
-                                    <button type="submit" className="btn btn--primary btn--sm">
-                                        Ver detalle y línea de tiempo
-                                    </button>
-                                </form>
-                            )}
+                            </form>
                         </div>
                     </div>
                 </div>
-
-                {apiBaseUrl && mode === "sender" && listWallet && (
-                    <div className="mt-2">
-                        <ShipmentTracker apiBaseUrl={apiBaseUrl} wallet={listWallet} />
-                    </div>
-                )}
 
                 <p className="text-sm text-muted mt-3 mb-0 content-narrow">
                     Operación con wallet conectada:{" "}
