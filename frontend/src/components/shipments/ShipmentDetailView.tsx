@@ -84,6 +84,10 @@ function SummaryGrid({
                     <p className="mb-0">{detail.checkpointCount}</p>
                 </div>
                 <div>
+                    <span className="text-muted">Incidencias</span>
+                    <p className="mb-0">{detail.incidentCount}</p>
+                </div>
+                <div>
                     <span className="text-muted">Creado</span>
                     <p className="mb-0">
                         <time dateTime={detail.createdAt}>{detail.createdAt}</time>
