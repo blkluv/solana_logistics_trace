@@ -4,6 +4,7 @@ use sqlx::{Postgres, Transaction};
 use uuid::Uuid;
 
 use crate::domain::shipment_status::next_status_after_checkpoint;
+use crate::incident_engine::repositories::monitoring;
 use crate::repos::checkpoints;
 
 #[must_use]
@@ -18,7 +19,15 @@ pub async fn apply_after_checkpoint_inserted(
 ) -> Result<(), sqlx::Error> {
     let current = checkpoints::select_shipment_status(tx, shipment_id).await?;
     let next = resolve_next_status(&current, checkpoint_type);
-    checkpoints::bump_checkpoint_count_update_status(tx, shipment_id, next).await
+    checkpoints::bump_checkpoint_count_update_status(tx, shipment_id, next).await?;
+
+    if matches!(next, Some("Delivered") | Some("Cancelled")) {
+        if let Err(e) = monitoring::stop_monitoring_tx(tx, shipment_id).await {
+            eprintln!("incident_engine: failed to stop monitoring for {shipment_id}: {e}");
+        }
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]
