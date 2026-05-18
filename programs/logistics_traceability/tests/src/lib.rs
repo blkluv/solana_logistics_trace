@@ -17,4 +17,7 @@ mod test_record_checkpoint;
 mod test_cancel_confirm_delivery;
 
 #[cfg(test)]
+mod test_report_critical_incident;
+
+#[cfg(test)]
 mod test_event_logs;
