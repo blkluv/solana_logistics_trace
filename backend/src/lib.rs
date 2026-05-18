@@ -46,13 +46,18 @@ pub fn build_rocket(
                 handlers::sync::post_sync_actor,
                 handlers::sync::post_sync_shipment,
                 handlers::sync::post_sync_checkpoint,
+                handlers::sync::post_sync_incident,
                 handlers::shipments::list_shipments,
                 handlers::shipments::list_shipment_checkpoints,
                 handlers::shipments::get_shipment,
                 handlers::public_shipments::get_public_shipment,
                 handlers::actors::list_recipients,
                 handlers::actors::get_actor_me,
+                handlers::incidents::list_incidents,
+                handlers::incidents::get_incident,
                 handlers::incidents::list_shipment_incidents,
+                handlers::incidents::resolve_incident,
+                handlers::telemetry::list_shipment_telemetry,
             ],
         )
 }

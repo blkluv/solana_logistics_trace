@@ -2,10 +2,12 @@
 
 mod actor;
 mod checkpoint;
+mod incident;
 mod shipment;
 
 pub use actor::sync_actor;
 pub use checkpoint::sync_checkpoint;
+pub use incident::sync_incident;
 pub use shipment::sync_shipment;
 
 use std::sync::Arc;
@@ -58,6 +60,15 @@ pub struct CheckpointSyncResponse {
     pub shipment_id: uuid::Uuid,
     #[serde(serialize_with = "serialize_u64_string")]
     pub on_chain_checkpoint_id: u64,
+    pub tx_hash: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IncidentSyncResponse {
+    pub incident_id: uuid::Uuid,
+    pub shipment_id: uuid::Uuid,
+    pub incident_type: String,
     pub tx_hash: String,
 }
 
