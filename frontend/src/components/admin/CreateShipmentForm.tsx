@@ -4,16 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import type { Connection, PublicKey } from "@solana/web3.js";
 import { PublicKey as PK } from "@solana/web3.js";
 
-import { GeoPointField, type LocationInputMode } from "@/components/admin/GeoPointField";
 import { getRecipientActors, type RecipientOption } from "@/lib/api/actors";
+import { getLocationsCatalog, type LocationCatalogItem } from "@/lib/api/locations";
 import { getProductsCatalog, type ProductCatalogItem } from "@/lib/api/products";
 import { apiBaseHasV1Prefix, normalizeApiBaseUrl } from "@/lib/api/backendConnectivity";
 import { postShipmentsSync } from "@/lib/api/sync";
-import {
-    geoPointCoordsValidationError,
-    geoPointValidationError,
-    isGeoPointString,
-} from "@/lib/geo/geoPoint";
+import { parseGeoPoint } from "@/lib/geo/geoPoint";
+import { locationToShipmentField } from "@/lib/geo/locationCatalog";
 import {
     adminHints,
     recipientFieldValidationError,
@@ -25,6 +22,28 @@ import { confirmSerializedTx } from "@/lib/solana/confirmSerializedTx";
 import { createCreateShipmentIx } from "@/lib/solana/instructions";
 import { fetchProgramConfig } from "@/lib/solana/program_config";
 import { actorPda } from "@/lib/solana/pdas";
+
+function LocationPreview({
+    item,
+    coord,
+}: {
+    item: LocationCatalogItem;
+    coord: string;
+}) {
+    return (
+        <div
+            className="text-xs text-muted mb-0 mt-2 p-2 border border-default rounded"
+            role="status"
+        >
+            <p className="mb-1">{item.description}</p>
+            <p className="mb-0">
+                <strong>{item.facilityTypeLabel || item.facilityType}</strong>
+                {" · "}
+                <strong>Coordenadas:</strong> {coord}
+            </p>
+        </div>
+    );
+}
 
 export type CreateShipmentFormProps = {
     connection: Connection;
@@ -53,8 +72,13 @@ export function CreateShipmentForm({
     const [productOptions, setProductOptions] = useState<ProductCatalogItem[]>([]);
     const [productsLoading, setProductsLoading] = useState(false);
     const [productsLoadError, setProductsLoadError] = useState<string | null>(null);
+    const [originCode, setOriginCode] = useState("");
+    const [destinationCode, setDestinationCode] = useState("");
     const [origin, setOrigin] = useState("");
     const [destination, setDestination] = useState("");
+    const [locationOptions, setLocationOptions] = useState<LocationCatalogItem[]>([]);
+    const [locationsLoading, setLocationsLoading] = useState(false);
+    const [locationsLoadError, setLocationsLoadError] = useState<string | null>(null);
     const [coldChain, setColdChain] = useState(false);
     const [busy, setBusy] = useState(false);
     const [senderActorReady, setSenderActorReady] = useState<boolean | null>(null);
@@ -152,8 +176,58 @@ export function CreateShipmentForm({
         };
     }, [apiBaseTrimmed, apiBaseWellFormed]);
 
+    useEffect(() => {
+        let cancel = false;
+        if (!apiBaseWellFormed) {
+            queueMicrotask(() => {
+                if (!cancel) {
+                    setLocationOptions([]);
+                    setOriginCode("");
+                    setDestinationCode("");
+                    setOrigin("");
+                    setDestination("");
+                    setLocationsLoading(false);
+                    setLocationsLoadError(null);
+                }
+            });
+            return () => {
+                cancel = true;
+            };
+        }
+        queueMicrotask(() => {
+            if (!cancel) {
+                setLocationsLoading(true);
+                setLocationsLoadError(null);
+            }
+        });
+        void getLocationsCatalog(apiBaseTrimmed).then((res) => {
+            if (cancel) {
+                return;
+            }
+            if (res.ok) {
+                setLocationOptions(res.data);
+                setLocationsLoadError(null);
+            } else {
+                setLocationOptions([]);
+                setOriginCode("");
+                setDestinationCode("");
+                setOrigin("");
+                setDestination("");
+                setLocationsLoadError("No se pudo cargar el catálogo de ubicaciones.");
+            }
+            setLocationsLoading(false);
+        });
+        return () => {
+            cancel = true;
+        };
+    }, [apiBaseTrimmed, apiBaseWellFormed]);
+
     const selectedProduct =
         productOptions.find((p) => p.code === productCode) ?? null;
+    const selectedOrigin =
+        locationOptions.find((l) => l.code === originCode) ?? null;
+    const selectedDestination =
+        locationOptions.find((l) => l.code === destinationCode) ?? null;
 
     useEffect(() => {
         let cancel = false;
@@ -168,19 +242,16 @@ export function CreateShipmentForm({
         };
     }, [connection, programId, payer]);
 
-    const [originMode, setOriginMode] = useState<LocationInputMode>(() =>
-        isGeoPointString(origin) ? "coordinates" : "text",
-    );
-    const [destMode, setDestMode] = useState<LocationInputMode>(() =>
-        isGeoPointString(destination) ? "coordinates" : "text",
-    );
-
-    const originErr =
-        geoPointCoordsValidationError(originMode, origin, "origen") ??
-        (originMode === "text" ? geoPointValidationError(origin, "el origen") : null);
-    const destErr =
-        geoPointCoordsValidationError(destMode, destination, "destino") ??
-        (destMode === "text" ? geoPointValidationError(destination, "el destino") : null);
+    const originErr = !originCode
+        ? "Seleccione el origen en el catálogo."
+        : parseGeoPoint(origin)
+          ? null
+          : "Origen: coordenadas inválidas.";
+    const destErr = !destinationCode
+        ? "Seleccione el destino en el catálogo."
+        : parseGeoPoint(destination)
+          ? null
+          : "Destino: coordenadas inválidas.";
 
     const onSubmit = useCallback(async () => {
         const trimmedRec = recipient.trim();
@@ -280,8 +351,11 @@ export function CreateShipmentForm({
     const disabled =
         busy ||
         !productCode ||
+        !originCode ||
+        !destinationCode ||
         !recipient.trim() ||
         (productOptions.length === 0 && !productsLoading && apiBaseWellFormed) ||
+        (locationOptions.length === 0 && !locationsLoading && apiBaseWellFormed) ||
         Boolean(originErr) ||
         Boolean(destErr) ||
         recipientFieldValidationError(recipient.trim()) !== null ||
@@ -427,24 +501,85 @@ export function CreateShipmentForm({
                 </div>
             </div>
 
-            <GeoPointField
-                id="admin-ship-orig"
-                label="Origen"
-                value={origin}
-                mode={originMode}
-                onModeChange={setOriginMode}
-                disabled={busy}
-                onChange={setOrigin}
-            />
-            <GeoPointField
-                id="admin-ship-dest"
-                label="Destino"
-                value={destination}
-                mode={destMode}
-                onModeChange={setDestMode}
-                disabled={busy}
-                onChange={setDestination}
-            />
+            <div className="form-row">
+                <div className="form-group">
+                    <label htmlFor="admin-ship-orig">Origen</label>
+                    <select
+                        id="admin-ship-orig"
+                        className="select"
+                        value={originCode}
+                        disabled={busy || locationsLoading || locationOptions.length === 0}
+                        onChange={(e) => {
+                            const code = e.target.value;
+                            setOriginCode(code);
+                            const item = locationOptions.find((l) => l.code === code);
+                            setOrigin(item ? locationToShipmentField(item) : "");
+                        }}
+                    >
+                        <option value="">
+                            {locationsLoading
+                                ? "Cargando ubicaciones…"
+                                : locationOptions.length === 0
+                                  ? "Sin ubicaciones en catálogo"
+                                  : "Seleccione origen"}
+                        </option>
+                        {locationOptions.map((l) => (
+                            <option key={`orig-${l.code}`} value={l.code}>
+                                {l.label} ({l.department})
+                            </option>
+                        ))}
+                    </select>
+                    {locationsLoadError ? (
+                        <p className="text-sm admin-form__err mb-0 mt-1" role="alert">
+                            {locationsLoadError}
+                        </p>
+                    ) : null}
+                    {selectedOrigin ? (
+                        <LocationPreview item={selectedOrigin} coord={origin} />
+                    ) : null}
+                    {originErr ? (
+                        <p className="text-sm admin-form__err mb-0 mt-1" role="alert">
+                            {originErr}
+                        </p>
+                    ) : null}
+                </div>
+                <div className="form-group">
+                    <label htmlFor="admin-ship-dest">Destino</label>
+                    <select
+                        id="admin-ship-dest"
+                        className="select"
+                        value={destinationCode}
+                        disabled={busy || locationsLoading || locationOptions.length === 0}
+                        onChange={(e) => {
+                            const code = e.target.value;
+                            setDestinationCode(code);
+                            const item = locationOptions.find((l) => l.code === code);
+                            setDestination(item ? locationToShipmentField(item) : "");
+                        }}
+                    >
+                        <option value="">
+                            {locationsLoading
+                                ? "Cargando ubicaciones…"
+                                : locationOptions.length === 0
+                                  ? "Sin ubicaciones en catálogo"
+                                  : "Seleccione destino"}
+                        </option>
+                        {locationOptions.map((l) => (
+                            <option key={`dest-${l.code}`} value={l.code}>
+                                {l.label} ({l.department})
+                            </option>
+                        ))}
+                    </select>
+                    {selectedDestination ? (
+                        <LocationPreview item={selectedDestination} coord={destination} />
+                    ) : null}
+                    {destErr ? (
+                        <p className="text-sm admin-form__err mb-0 mt-1" role="alert">
+                            {destErr}
+                        </p>
+                    ) : null}
+                </div>
+            </div>
 
             {!programId ? (
                 <p className="text-sm text-muted mb-2">{adminHints.programNotConfigured}</p>
