@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use logistics_trace_backend::{
-    build_rocket, config::AppConfig, cors, db, solana::rpc_http::HttpSolanaRpcClient,
-    solana::SolanaRpcClient,
+    build_rocket, config::AppConfig, cors, db, incident_engine::spawn_incident_engine,
+    solana::rpc_http::HttpSolanaRpcClient, solana::SolanaRpcClient,
 };
 
 #[rocket::main]
@@ -31,6 +31,8 @@ async fn main() -> Result<(), rocket::Error> {
 
     let solana: Arc<dyn SolanaRpcClient> =
         Arc::new(HttpSolanaRpcClient::new(cfg.solana_rpc_url.clone()));
+
+    spawn_incident_engine(pool.clone(), cfg.incident_engine_enabled);
 
     let cors_policy = cors::cors_for_origins(&cfg.cors_allowed_origins);
     let figment = rocket::Config::figment().merge(("port", cfg.backend_port));

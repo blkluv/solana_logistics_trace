@@ -9,6 +9,7 @@ pub struct AppConfig {
     pub solana_rpc_url: String,
     /// Base58 program id for sync validation (§9).
     pub program_id: String,
+    pub incident_engine_enabled: bool,
 }
 
 fn parse_origins(raw: &str) -> Vec<String> {
@@ -56,12 +57,18 @@ impl AppConfig {
             std::process::exit(1);
         }
 
+        let incident_engine_enabled = env::var("INCIDENT_ENGINE_ENABLED")
+            .ok()
+            .map(|s| !matches!(s.as_str(), "0" | "false" | "FALSE" | "no" | "NO"))
+            .unwrap_or(true);
+
         Self {
             backend_port,
             database_url,
             cors_allowed_origins,
             solana_rpc_url,
             program_id,
+            incident_engine_enabled,
         }
     }
 
@@ -73,6 +80,7 @@ impl AppConfig {
             cors_allowed_origins: vec!["http://localhost:3000".into()],
             solana_rpc_url: "http://127.0.0.1:8899".into(),
             program_id: "BPFLoaderUpgradeab1e11111111111111111111111".into(),
+            incident_engine_enabled: false,
         }
     }
 }

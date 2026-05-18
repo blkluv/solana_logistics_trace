@@ -7,6 +7,7 @@ use super::{
     first_matching_account, pubkey_bs58, validate_signature_base58, ShipmentSyncResponse,
     SyncOutcome, SyncRequestBody,
 };
+use crate::incident_engine::MonitoringService;
 use crate::repos::shipments;
 use crate::solana::decode::{decode_shipment_account, shipment_status_code};
 use crate::solana::discriminators::create_shipment_ix;
@@ -87,6 +88,10 @@ pub async fn sync_shipment(
     )
     .await
     .map_err(|e| SolanaSyncError::Validation(e.to_string()))?;
+
+    if let Err(e) = MonitoringService::start(pool, row).await {
+        eprintln!("incident_engine: failed to start monitoring for {row}: {e}");
+    }
 
     Ok(SyncOutcome {
         created: true,

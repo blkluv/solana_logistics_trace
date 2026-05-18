@@ -1,5 +1,6 @@
 pub mod access;
 pub mod config;
+pub mod incident_engine;
 pub mod cors;
 pub mod db;
 pub mod domain;
@@ -51,6 +52,7 @@ pub fn build_rocket(
                 handlers::public_shipments::get_public_shipment,
                 handlers::actors::list_recipients,
                 handlers::actors::get_actor_me,
+                handlers::incidents::list_shipment_incidents,
             ],
         )
 }

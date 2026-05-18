@@ -1202,6 +1202,7 @@ dependencies = [
  "bs58",
  "chrono",
  "dotenvy",
+ "rand",
  "reqwest",
  "rocket",
  "rocket_cors",
