@@ -29,6 +29,11 @@ export function canSenderRegisterShipments(role: string | null): boolean {
     return role === "Sender";
 }
 
+/** Reporte crítico on-chain: participantes del envío (MVP). */
+export function canReportCriticalIncident(role: string | null): boolean {
+    return role === "Sender" || role === "Carrier" || role === "Recipient";
+}
+
 /** Carrier, Hub y Recipient registran checkpoints on-chain. */
 export function canRecordCheckpoint(role: string | null): boolean {
     return role === "Carrier" || role === "Hub" || role === "Recipient";
