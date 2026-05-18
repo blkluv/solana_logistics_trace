@@ -40,6 +40,7 @@ pub fn build_rocket(
                 handlers::catalogs::get_checkpoint_types,
                 handlers::catalogs::get_shipment_statuses,
                 handlers::catalogs::get_incident_types,
+                handlers::catalogs::get_products,
                 handlers::sync::post_sync_actor,
                 handlers::sync::post_sync_shipment,
                 handlers::sync::post_sync_checkpoint,
