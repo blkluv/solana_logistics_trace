@@ -55,8 +55,8 @@ mod tests {
     use uuid::Uuid;
 
     use super::*;
-    use crate::incident_engine::rules::ColdChainRule;
     use crate::incident_engine::models::ShipmentContext;
+    use crate::incident_engine::rules::{ColdChainRule, IncidentRule};
 
     #[tokio::test]
     async fn cold_chain_rule_triggers_above_threshold() {
