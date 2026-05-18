@@ -2,7 +2,7 @@
 
 use anchor_lang::prelude::*;
 
-use crate::state::{ActorRole, CheckpointType};
+use crate::state::{ActorRole, CheckpointType, CriticalIncidentType, OnChainIncidentSeverity};
 
 #[event]
 pub struct ActorRegistered {
@@ -35,4 +35,13 @@ pub struct ShipmentCancelled {
 pub struct DeliveryConfirmed {
     pub on_chain_shipment_id: u64,
     pub recipient: Pubkey,
+}
+
+#[event]
+pub struct CriticalIncidentReported {
+    pub on_chain_shipment_id: u64,
+    pub reporter: Pubkey,
+    pub incident_type: CriticalIncidentType,
+    pub severity: OnChainIncidentSeverity,
+    pub evidence_hash: [u8; 32],
 }
