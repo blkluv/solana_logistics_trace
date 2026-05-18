@@ -1,20 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 
 import { ShipmentDetailView } from "@/components/shipments/ShipmentDetailView";
 import { ShipmentStatusRail } from "@/components/public/ShipmentStatusRail";
-import { useShipmentDetail } from "@/lib/api/useShipmentDetail";
+import { usePublicShipmentDetail } from "@/lib/api/usePublicShipmentDetail";
+import { isShipmentServiceUuid } from "@/lib/api/publicShipments";
 import { getPublicConfig } from "@/lib/env";
 
 export function PublicShipmentDetailClient() {
     const params = useParams();
-    const searchParams = useSearchParams();
     const shipmentId = typeof params?.shipmentId === "string" ? params.shipmentId : "";
-    const wallet = searchParams.get("wallet")?.trim() ?? "";
     const { apiBaseUrl } = getPublicConfig();
-    const { detail, error, loading } = useShipmentDetail(apiBaseUrl, shipmentId, wallet || null);
+    const validId = isShipmentServiceUuid(shipmentId) ? shipmentId : "";
+    const { detail, error, loading } = usePublicShipmentDetail(apiBaseUrl, validId);
 
     return (
         <main className="page-main">
@@ -33,12 +33,11 @@ export function PublicShipmentDetailClient() {
                     </p>
                 )}
 
-                {apiBaseUrl && (!wallet || !shipmentId) && (
-                    <p className="text-muted text-sm mt-2" role="status">
-                        Falta el parámetro <code className="mono">wallet</code> en la URL (wallet
-                        participante). Use el formulario &quot;Por ID&quot; en{" "}
+                {apiBaseUrl && shipmentId && !validId && (
+                    <p className="text-sm mt-2" role="alert">
+                        El identificador en la URL no es un UUID de servicio válido.{" "}
                         <Link prefetch={false} href="/envios">
-                            /envios
+                            Vuelva a buscar
                         </Link>
                         .
                     </p>

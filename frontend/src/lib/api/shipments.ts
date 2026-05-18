@@ -144,7 +144,7 @@ function parseShipmentListItem(raw: unknown): ShipmentListItem | null {
     };
 }
 
-function parseShipmentDetail(raw: unknown): ShipmentDetail | null {
+export function parseShipmentDetail(raw: unknown): ShipmentDetail | null {
     const o = asRecord(raw);
     if (!o) {
         return null;
