@@ -3,7 +3,9 @@
 import type { ReactNode } from "react";
 
 import { IncidentListPanel } from "@/components/incidents/IncidentListPanel";
+import { TelemetryPanel } from "@/components/incidents/TelemetryPanel";
 import { useShipmentIncidents } from "@/lib/api/useShipmentIncidents";
+import { useShipmentTelemetry } from "@/lib/api/useShipmentTelemetry";
 
 export type ShipmentIncidentsSectionProps = {
     apiBaseUrl: string;
@@ -23,6 +25,8 @@ export function ShipmentIncidentsSection({
         shipmentId,
         wallet,
     );
+    const telemetry = useShipmentTelemetry(apiBaseUrl, shipmentId, wallet);
+
     return (
         <section className="card mt-2 shipment-incidents" aria-labelledby="shipment-incidents-hd">
             <div className="card__hd shipment-incidents__hd">
@@ -35,7 +39,15 @@ export function ShipmentIncidentsSection({
                 <p className="text-xs text-muted mb-3">
                     Detecciones automáticas del motor (telemetría) y reportes críticos firmados on-chain.
                 </p>
+                <h3 className="shipment-incidents__subtitle text-sm mb-2">Incidencias</h3>
                 <IncidentListPanel items={items} loading={loading} error={error} />
+                <h3 className="shipment-incidents__subtitle text-sm mb-2 mt-4">Telemetría reciente</h3>
+                <TelemetryPanel
+                    items={telemetry.items}
+                    loading={telemetry.loading}
+                    error={telemetry.error}
+                    unavailable={telemetry.unavailable}
+                />
                 {wallet ? (
                     <button
                         type="button"
