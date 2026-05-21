@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vitest";
 
-import { formatParticipantLine, maskWallet } from "./display";
+import { formatParticipantLine, maskTxSignature, maskWallet } from "./display";
+
+describe("maskTxSignature", () => {
+    it("truncates long signatures", () => {
+        const tx = "5K7x8y9zAbCdEfGhIjKlMnOpQrStUvWxYz1234567890abcdefghij";
+        expect(maskTxSignature(tx)).toMatch(/^5K7x8y9z…/);
+    });
+
+    it("keeps system prefix hashes", () => {
+        expect(maskTxSignature("system:abc-123")).toBe("system:abc-123");
+    });
+});
 
 describe("maskWallet", () => {
     it("truncates long base58 addresses", () => {

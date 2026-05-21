@@ -46,10 +46,15 @@ export function ShipmentDetailHero({
                         <div className="shipment-hero__titles">
                             <p className="shipment-hero__eyebrow">Detalle de envío</p>
                             <h1 className="shipment-hero__title">{productTitle}</h1>
-                            <p className="shipment-hero__code mono">
-                                {detail.product}
-                                <span className="shipment-hero__sep"> · </span>
-                                #{detail.onChainShipmentId} on-chain
+                            <p className="shipment-hero__product mono">{detail.product}</p>
+                            <p className="shipment-hero__uuid">
+                                <span className="shipment-hero__uuid-label">ID envío</span>
+                                <span className="shipment-hero__uuid-value mono" title={detail.shipmentId}>
+                                    {detail.shipmentId}
+                                </span>
+                            </p>
+                            <p className="shipment-hero__onchain mono">
+                                On-chain #{detail.onChainShipmentId}
                             </p>
                         </div>
                     </div>

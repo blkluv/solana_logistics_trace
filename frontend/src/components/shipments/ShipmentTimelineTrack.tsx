@@ -1,6 +1,7 @@
 "use client";
 
-import { CheckpointTypeIcon } from "@/components/ui/TraceIcons";
+import { CheckpointTypeIcon, IconLink } from "@/components/ui/TraceIcons";
+import { maskTxSignature } from "@/lib/wallet/display";
 import type { CheckpointItem } from "@/lib/api/shipments";
 import {
     checkpointIconKind,
@@ -65,6 +66,18 @@ export function ShipmentTimelineTrack({ checkpoints }: ShipmentTimelineTrackProp
                                     {c.humidity != null ? `HR ${c.humidity}%` : null}
                                 </p>
                             )}
+                            {c.txHash ? (
+                                <p className="shipment-timeline__tx">
+                                    <IconLink className="trace-icon shipment-timeline__tx-icon" />
+                                    <span className="shipment-timeline__tx-label">Tx</span>
+                                    <code
+                                        className="shipment-timeline__tx-hash mono"
+                                        title={c.txHash}
+                                    >
+                                        {maskTxSignature(c.txHash)}
+                                    </code>
+                                </p>
+                            ) : null}
                         </div>
                     </li>
                 );

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import type { CheckpointIconKind } from "@/lib/shipments/checkpointDisplay";
+import type { JourneyStepIconKind } from "@/lib/shipments/journeyTimeline";
 
 type IconProps = { className?: string };
 
@@ -92,6 +93,35 @@ export function IconRadio({ className }: IconProps) {
     );
 }
 
+export function IconLink({ className }: IconProps) {
+    return (
+        <Svg className={className}>
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+        </Svg>
+    );
+}
+
+export function IconHub({ className }: IconProps) {
+    return (
+        <Svg className={className}>
+            <path d="M3 21h18" />
+            <path d="M5 21V7l7-4 7 4v14" />
+            <path d="M9 21v-6h6v6" />
+        </Svg>
+    );
+}
+
+export function IconBox({ className }: IconProps) {
+    return (
+        <Svg className={className}>
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+            <path d="M3.27 6.96 12 12.01l8.73-5.05" />
+            <path d="M12 22.08V12" />
+        </Svg>
+    );
+}
+
 export function IconUser({ className }: IconProps) {
     return (
         <Svg className={className}>
@@ -119,6 +149,31 @@ export function CheckpointTypeIcon({
             return <IconCheckCircle className={className} />;
         case "sensor":
             return <IconRadio className={className} />;
+        default:
+            return <IconMapPin className={className} />;
+    }
+}
+
+export function JourneyStepIcon({
+    kind,
+    className,
+}: {
+    kind: JourneyStepIconKind;
+    className?: string;
+}) {
+    switch (kind) {
+        case "created":
+            return <IconBox className={className} />;
+        case "pickup":
+            return <IconPackage className={className} />;
+        case "hub":
+            return <IconHub className={className} />;
+        case "transit":
+            return <IconTruck className={className} />;
+        case "out":
+            return <IconMapPin className={className} />;
+        case "delivered":
+            return <IconCheckCircle className={className} />;
         default:
             return <IconMapPin className={className} />;
     }

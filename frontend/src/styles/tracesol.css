@@ -2604,6 +2604,38 @@ table.data-table {
   margin-top: 0.1rem;
 }
 
+.shipment-timeline__tx {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.45rem;
+  margin: 0.45rem 0 0;
+  padding: 0.35rem 0.5rem;
+  background: var(--color-bg-page);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+}
+
+.shipment-timeline__tx-icon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.shipment-timeline__tx-label {
+  font-size: 0.65rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.shipment-timeline__tx-hash {
+  font-size: 0.72rem;
+  color: var(--color-text);
+  word-break: break-all;
+}
+
 .shipment-incident-stack {
   list-style: none;
   margin: 0;
@@ -2775,14 +2807,45 @@ table.data-table {
   color: var(--color-text);
 }
 
-.shipment-hero__code {
-  margin: 0.35rem 0 0;
+.shipment-hero__product {
+  margin: 0.25rem 0 0;
   font-size: 0.78rem;
   color: var(--color-text-muted);
 }
 
-.shipment-hero__sep {
-  opacity: 0.5;
+.shipment-hero__uuid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
+  margin: 0.45rem 0 0;
+  padding: 0.35rem 0.5rem;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  max-width: 100%;
+}
+
+.shipment-hero__uuid-label {
+  font-size: 0.65rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.shipment-hero__uuid-value {
+  font-size: 0.75rem;
+  color: var(--color-text);
+  word-break: break-all;
+  line-height: 1.35;
+}
+
+.shipment-hero__onchain {
+  margin: 0.3rem 0 0;
+  font-size: 0.72rem;
+  color: var(--color-text-light);
 }
 
 .shipment-hero__status-block {
@@ -2829,6 +2892,19 @@ table.data-table {
 
 .shipment-journey__endpoint {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.shipment-journey__endpoint-icon {
+  color: var(--color-primary);
+  margin-bottom: 0.1rem;
+}
+
+.shipment-journey__endpoint-icon .trace-icon {
+  width: 1rem;
+  height: 1rem;
 }
 
 .shipment-journey__endpoint--dest {
@@ -2934,21 +3010,30 @@ table.data-table {
 
 .shipment-journey__marker {
   position: relative;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 2rem;
+  height: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.shipment-journey__dot {
-  width: 0.65rem;
-  height: 0.65rem;
+.shipment-journey__icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
   border-radius: 50%;
   background: var(--color-bg-card);
-  border: 2px solid var(--color-text-light);
+  border: 2px solid var(--color-border);
+  color: var(--color-text-muted);
   transition: transform var(--transition), border-color var(--transition),
-    background var(--transition);
+    background var(--transition), color var(--transition);
+}
+
+.shipment-journey__icon-wrap .trace-icon {
+  width: 0.95rem;
+  height: 0.95rem;
 }
 
 .shipment-journey__check {
@@ -2980,9 +3065,10 @@ table.data-table {
   border-radius: 999px;
 }
 
-.shipment-journey__step.is-past .shipment-journey__dot {
+.shipment-journey__step.is-past .shipment-journey__icon-wrap {
   background: var(--color-primary);
   border-color: var(--color-primary);
+  color: #fff;
 }
 
 .shipment-journey__step.is-past .shipment-journey__label {
@@ -2990,16 +3076,22 @@ table.data-table {
 }
 
 .shipment-journey__step.is-current .shipment-journey__marker {
-  width: 1.85rem;
-  height: 1.85rem;
+  width: 2.35rem;
+  height: 2.35rem;
 }
 
-.shipment-journey__step.is-current .shipment-journey__dot {
-  width: 0.85rem;
-  height: 0.85rem;
+.shipment-journey__step.is-current .shipment-journey__icon-wrap {
+  width: 2rem;
+  height: 2rem;
   background: var(--color-primary);
   border-color: var(--color-primary);
+  color: #fff;
   box-shadow: 0 0 0 4px var(--color-accent-soft);
+}
+
+.shipment-journey__step.is-current .shipment-journey__icon-wrap .trace-icon {
+  width: 1.1rem;
+  height: 1.1rem;
 }
 
 .shipment-journey__step.is-current .shipment-journey__label {
@@ -3008,13 +3100,13 @@ table.data-table {
   font-size: 0.72rem;
 }
 
-.shipment-journey__step.is-future .shipment-journey__dot {
+.shipment-journey__step.is-future .shipment-journey__icon-wrap {
   background: var(--color-bg-page);
   border-color: var(--color-border);
   opacity: 0.85;
 }
 
-.shipment-journey__step.is-muted .shipment-journey__dot,
+.shipment-journey__step.is-muted .shipment-journey__icon-wrap,
 .shipment-journey__step.is-muted .shipment-journey__label {
   opacity: 0.45;
 }
