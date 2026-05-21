@@ -14,6 +14,7 @@ export type IncidentItem = {
     resolvedAt: string | null;
     ruleName: string | null;
     txHash: string | null;
+    evidenceJson: Record<string, unknown> | null;
 };
 
 export type IncidentsGetResult =
@@ -67,6 +68,10 @@ export function parseIncidentItem(raw: unknown): IncidentItem | null {
         ruleName:
             o.ruleName === null || o.ruleName === undefined ? null : asString(o.ruleName) || null,
         txHash: o.txHash === null || o.txHash === undefined ? null : asString(o.txHash) || null,
+        evidenceJson:
+            typeof o.evidenceJson === "object" && o.evidenceJson !== null && !Array.isArray(o.evidenceJson)
+                ? (o.evidenceJson as Record<string, unknown>)
+                : null,
     };
 }
 

@@ -29,6 +29,7 @@ describe("parseIncidentItem", () => {
             resolvedAt: null,
             ruleName: "cold_chain_max",
             txHash: "system:abc",
+            evidenceJson: null,
         });
     });
 
