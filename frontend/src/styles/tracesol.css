@@ -2809,70 +2809,272 @@ table.data-table {
   padding: 0.2rem 0.55rem;
 }
 
-.shipment-hero__route {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 0.75rem;
-  align-items: center;
-  padding: 0.85rem 1rem;
-  background: rgba(255, 255, 255, 0.55);
-  border-radius: var(--radius-md);
+/* —— Línea de tiempo del envío (origen/destino + etapas) —— */
+.shipment-journey {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  background: rgba(255, 255, 255, 0.6);
   border: 1px solid var(--color-accent-soft);
+  border-radius: var(--radius-md);
 }
 
-.shipment-hero__route-node {
+.shipment-journey__corridor {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.shipment-journey__endpoint {
   min-width: 0;
 }
 
-.shipment-hero__route-node--end {
+.shipment-journey__endpoint--dest {
   text-align: right;
 }
 
-.shipment-hero__route-label {
+.shipment-journey__endpoint-tag {
   display: block;
-  font-size: 0.68rem;
+  font-size: 0.65rem;
+  font-weight: 650;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-text-muted);
-  margin-bottom: 0.15rem;
+  letter-spacing: 0.07em;
+  color: var(--color-primary);
+  margin-bottom: 0.2rem;
 }
 
-.shipment-hero__route-value {
+.shipment-journey__endpoint-coords {
   display: block;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 600;
+  color: var(--color-text);
   line-height: 1.3;
-  word-break: break-word;
 }
 
-.shipment-hero__route-track {
+.shipment-journey__corridor-line {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 4.5rem;
-  position: relative;
+  width: 3.5rem;
   flex-shrink: 0;
 }
 
-.shipment-hero__route-line {
+.shipment-journey__corridor-track {
   display: block;
   width: 100%;
   height: 2px;
   background: linear-gradient(
     90deg,
     var(--color-primary-light),
-    var(--color-primary)
+    var(--color-primary-dark)
   );
-  border-radius: 1px;
+  border-radius: 2px;
 }
 
-.shipment-hero__route-dot {
+.shipment-journey__rail-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.shipment-journey__rail-caption {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.shipment-journey__rail-status {
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--color-primary-dark);
+}
+
+.shipment-journey__rail {
+  position: relative;
+  padding: 0.35rem 0 0.25rem;
+}
+
+.shipment-journey__rail-spine {
   position: absolute;
-  width: 0.55rem;
-  height: 0.55rem;
+  left: 0;
+  right: 0;
+  top: 1.15rem;
+  height: 2px;
+  background: var(--color-border);
+  border-radius: 1px;
+  z-index: 0;
+}
+
+.shipment-journey__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.35rem;
+  position: relative;
+  z-index: 1;
+}
+
+.shipment-journey__step {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.35rem;
+}
+
+.shipment-journey__marker {
+  position: relative;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shipment-journey__dot {
+  width: 0.65rem;
+  height: 0.65rem;
   border-radius: 50%;
+  background: var(--color-bg-card);
+  border: 2px solid var(--color-text-light);
+  transition: transform var(--transition), border-color var(--transition),
+    background var(--transition);
+}
+
+.shipment-journey__check {
+  position: absolute;
+  bottom: -0.15rem;
+  right: -0.2rem;
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: var(--color-success);
+  line-height: 1;
+}
+
+.shipment-journey__label {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  line-height: 1.25;
+  max-width: 4.5rem;
+}
+
+.shipment-journey__here {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-primary);
+  background: var(--color-accent-bg);
+  padding: 0.1rem 0.35rem;
+  border-radius: 999px;
+}
+
+.shipment-journey__step.is-past .shipment-journey__dot {
   background: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-accent-soft);
+  border-color: var(--color-primary);
+}
+
+.shipment-journey__step.is-past .shipment-journey__label {
+  color: var(--color-text);
+}
+
+.shipment-journey__step.is-current .shipment-journey__marker {
+  width: 1.85rem;
+  height: 1.85rem;
+}
+
+.shipment-journey__step.is-current .shipment-journey__dot {
+  width: 0.85rem;
+  height: 0.85rem;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--color-accent-soft);
+}
+
+.shipment-journey__step.is-current .shipment-journey__label {
+  font-weight: 650;
+  color: var(--color-primary-dark);
+  font-size: 0.72rem;
+}
+
+.shipment-journey__step.is-future .shipment-journey__dot {
+  background: var(--color-bg-page);
+  border-color: var(--color-border);
+  opacity: 0.85;
+}
+
+.shipment-journey__step.is-muted .shipment-journey__dot,
+.shipment-journey__step.is-muted .shipment-journey__label {
+  opacity: 0.45;
+}
+
+.shipment-journey__exception {
+  margin: 0.15rem 0 0;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .shipment-journey__corridor {
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
+
+  .shipment-journey__endpoint--dest {
+    text-align: left;
+  }
+
+  .shipment-journey__corridor-line {
+    width: 100%;
+    height: 1.5rem;
+  }
+
+  .shipment-journey__corridor-track {
+    width: 2px;
+    height: 100%;
+    margin: 0 auto;
+  }
+
+  .shipment-journey__steps {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+
+  .shipment-journey__rail-spine {
+    left: 0.72rem;
+    right: auto;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    height: auto;
+  }
+
+  .shipment-journey__step {
+    flex-direction: row;
+    align-items: center;
+    text-align: left;
+    gap: 0.65rem;
+  }
+
+  .shipment-journey__label {
+    max-width: none;
+    flex: 1;
+  }
+
+  .shipment-journey__here {
+    flex-shrink: 0;
+  }
 }
 
 .shipment-hero__metrics {
@@ -2937,7 +3139,7 @@ table.data-table {
 
 .shipment-hero__actors {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
   padding-top: 0.15rem;
   border-top: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent);
@@ -2945,14 +3147,12 @@ table.data-table {
 
 .shipment-hero__actor {
   display: flex;
-  gap: 0.55rem;
-  align-items: flex-start;
-}
-
-.shipment-hero__actor-icon {
-  color: var(--color-primary);
-  margin-top: 0.15rem;
-  flex-shrink: 0;
+  flex-direction: column;
+  gap: 0.12rem;
+  padding: 0.65rem 0.75rem;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
 }
 
 .shipment-hero__actor-role {

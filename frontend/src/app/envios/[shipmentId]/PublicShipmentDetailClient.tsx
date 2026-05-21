@@ -56,9 +56,13 @@ export function PublicShipmentDetailClient() {
                             detail={detail}
                             lead={
                                 <div className="card">
-                                    <div className="card__hd">Etapas del envío</div>
                                     <div className="card__bd">
-                                        <ShipmentStatusRail status={detail.status} />
+                                        <ShipmentStatusRail
+                                            status={detail.status}
+                                            origin={detail.origin}
+                                            destination={detail.destination}
+                                            checkpoints={detail.checkpoints}
+                                        />
                                     </div>
                                 </div>
                             }
