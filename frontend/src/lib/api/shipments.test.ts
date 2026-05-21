@@ -16,15 +16,26 @@ const listRow = {
     requiresColdChain: false,
 };
 
+const participant = (wallet: string, name: string) => ({
+    wallet,
+    walletMasked: `${wallet.slice(0, 4)}…${wallet.slice(-4)}`,
+    displayName: name,
+    role: "Carrier",
+});
+
 const detailBody = {
     ...listRow,
     displayLabel: null,
+    productLabel: "Caja térmica",
     origin: "A",
     destination: "B",
     sender: "wallet-sender",
     recipient: "wallet-recipient",
+    senderParticipant: participant("wallet-sender", "Remitente SA"),
+    recipientParticipant: participant("wallet-recipient", "Destino Ltd"),
     checkpointCount: 1,
     incidentCount: 0,
+    openIncidentCount: 0,
     deliveredAt: null,
     checkpoints: [
         {
@@ -34,6 +45,9 @@ const detailBody = {
             occurredAt: "2026-01-02T00:00:00Z",
             location: "Hub",
             actor: "actor-1",
+            actorWalletMasked: "acto…r-1",
+            actorDisplayName: "Transportes Norte",
+            actorRole: "Carrier",
             temperatureCenti: null,
             humidity: null,
             latitude: 10,

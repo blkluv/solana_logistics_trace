@@ -23,6 +23,13 @@ export type ShipmentListItem = {
     requiresColdChain: boolean;
 };
 
+export type WalletParticipant = {
+    wallet: string;
+    walletMasked: string;
+    displayName: string;
+    role: string | null;
+};
+
 export type CheckpointItem = {
     checkpointId: string;
     onChainCheckpointId: string;
@@ -30,6 +37,9 @@ export type CheckpointItem = {
     occurredAt: string;
     location: string | null;
     actor: string;
+    actorWalletMasked: string;
+    actorDisplayName: string;
+    actorRole: string | null;
     temperatureCenti: number | null;
     humidity: number | null;
     latitude: number | null;
@@ -43,16 +53,20 @@ export type ShipmentDetail = {
     onChainShipmentId: string;
     displayLabel: string | null;
     product: string;
+    productLabel: string | null;
     origin: string;
     destination: string;
     sender: string;
     recipient: string;
+    senderParticipant: WalletParticipant;
+    recipientParticipant: WalletParticipant;
     status: string;
     requiresColdChain: boolean;
     createdAt: string;
     deliveredAt: string | null;
     checkpointCount: number;
     incidentCount: number;
+    openIncidentCount: number;
     checkpoints: CheckpointItem[];
     incidents: unknown[];
 };
@@ -95,10 +109,14 @@ function parseCheckpointItem(raw: unknown): CheckpointItem | null {
     const type = asString(o.type);
     const occurredAt = asString(o.occurredAt);
     const actor = asString(o.actor);
+    const actorWalletMasked = asString(o.actorWalletMasked) || actor;
+    const actorDisplayName = asString(o.actorDisplayName) || actorWalletMasked;
     const txHash = asString(o.txHash);
     if (!checkpointId || !onChainCheckpointId || !type || !occurredAt || !actor || !txHash) {
         return null;
     }
+    const actorRole =
+        o.actorRole === null || o.actorRole === undefined ? null : asString(o.actorRole) || null;
     const metadataRaw = o.metadata;
     const metadata =
         typeof metadataRaw === "object" && metadataRaw !== null && !Array.isArray(metadataRaw)
@@ -111,6 +129,9 @@ function parseCheckpointItem(raw: unknown): CheckpointItem | null {
         occurredAt,
         location: o.location === null || o.location === undefined ? null : String(o.location),
         actor,
+        actorWalletMasked,
+        actorDisplayName,
+        actorRole,
         temperatureCenti: asNum(o.temperatureCenti),
         humidity: asNum(o.humidity),
         latitude: asNum(o.latitude),
@@ -144,7 +165,29 @@ function parseShipmentListItem(raw: unknown): ShipmentListItem | null {
     };
 }
 
-export function parseShipmentDetail(raw: unknown): ShipmentDetail | null {
+export function parseWalletParticipant(raw: unknown, fallbackWallet: string): WalletParticipant {
+    const o = asRecord(raw);
+    if (!o) {
+        const masked =
+            fallbackWallet.length > 10
+                ? `${fallbackWallet.slice(0, 4)}…${fallbackWallet.slice(-4)}`
+                : fallbackWallet;
+        return {
+            wallet: fallbackWallet,
+            walletMasked: masked,
+            displayName: masked,
+            role: null,
+        };
+    }
+    const wallet = asString(o.wallet) || fallbackWallet;
+    const walletMasked = asString(o.walletMasked) || wallet;
+    const displayName = asString(o.displayName) || walletMasked;
+    const role =
+        o.role === null || o.role === undefined ? null : asString(o.role) || null;
+    return { wallet, walletMasked, displayName, role };
+}
+
+function parseShipmentDetail(raw: unknown): ShipmentDetail | null {
     const o = asRecord(raw);
     if (!o) {
         return null;
@@ -161,6 +204,11 @@ export function parseShipmentDetail(raw: unknown): ShipmentDetail | null {
     const requiresColdChain = asBool(o.requiresColdChain);
     const checkpointCount = asNum(o.checkpointCount);
     const incidentCount = asNum(o.incidentCount);
+    const openIncidentCount = asNum(o.openIncidentCount) ?? incidentCount;
+    const productLabel =
+        o.productLabel === null || o.productLabel === undefined
+            ? null
+            : asString(o.productLabel) || null;
     if (
         !shipmentId ||
         !onChainShipmentId ||
@@ -177,6 +225,8 @@ export function parseShipmentDetail(raw: unknown): ShipmentDetail | null {
     ) {
         return null;
     }
+    const senderParticipant = parseWalletParticipant(o.senderParticipant, sender);
+    const recipientParticipant = parseWalletParticipant(o.recipientParticipant, recipient);
     const checkpointsRaw = o.checkpoints;
     const checkpoints: CheckpointItem[] = [];
     if (Array.isArray(checkpointsRaw)) {
@@ -197,16 +247,20 @@ export function parseShipmentDetail(raw: unknown): ShipmentDetail | null {
         onChainShipmentId,
         displayLabel,
         product,
+        productLabel,
         origin,
         destination,
         sender,
         recipient,
+        senderParticipant,
+        recipientParticipant,
         status,
         requiresColdChain,
         createdAt,
         deliveredAt,
         checkpointCount,
         incidentCount,
+        openIncidentCount,
         checkpoints,
         incidents,
     };

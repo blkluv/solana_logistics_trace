@@ -7,8 +7,7 @@ import { useParams } from "next/navigation";
 import { AdminModal } from "@/components/admin/AdminModal";
 import { IncidentHubNavLink } from "@/components/incidents/IncidentHubNavLink";
 import { ReportCriticalIncidentForm } from "@/components/admin/ReportCriticalIncidentForm";
-import { ShipmentDetailView } from "@/components/shipments/ShipmentDetailView";
-import { ShipmentIncidentsSection } from "@/components/shipments/ShipmentIncidentsSection";
+import { ShipmentDetailWorkspace } from "@/components/shipments/ShipmentDetailWorkspace";
 import { canReportCriticalIncidentAction } from "@/lib/admin/incidentActions";
 import { useShipmentDetail } from "@/lib/api/useShipmentDetail";
 import { getPublicConfig } from "@/lib/env";
@@ -44,6 +43,15 @@ export default function PanelShipmentDetailPage() {
         setReportOpen(false);
     }, [reload]);
 
+    const backLink = (
+        <p className="shipment-detail-v2__back admin-detail-back">
+            <Link prefetch={false} className="btn btn--ghost btn--sm" href="/panel/envios">
+                ← Envíos
+            </Link>
+            <IncidentHubNavLink />
+        </p>
+    );
+
     const reportButton =
         wallet && detail ? (
             <button
@@ -59,16 +67,7 @@ export default function PanelShipmentDetailPage() {
 
     return (
         <main className="page-main">
-            <div className="shell">
-                <p className="text-sm mb-2 admin-detail-back">
-                    <Link prefetch={false} className="btn btn--ghost btn--sm" href="/panel/envios">
-                        ← Volver a envíos
-                    </Link>
-                    <IncidentHubNavLink />
-                </p>
-                <h1 className="page-title">Detalle de envío</h1>
-                <p className="page-sub mono">{shipmentId}</p>
-
+            <div className="shell shell--wide">
                 {!apiBaseUrl && (
                     <p className="text-muted text-sm mt-2" role="status">
                         Configura <code className="mono">NEXT_PUBLIC_API_BASE_URL</code>.
@@ -88,23 +87,16 @@ export default function PanelShipmentDetailPage() {
                     </p>
                 )}
 
-                {detail && (
-                    <div className="mt-2">
-                        <ShipmentDetailView
-                            detail={detail}
-                            summaryVariant="prose"
-                            showTimeline
-                            showMap
-                        />
-                        {apiBaseUrl && (
-                            <ShipmentIncidentsSection
-                                apiBaseUrl={apiBaseUrl}
-                                shipmentId={shipmentId}
-                                wallet={wallet}
-                                headerAction={reportButton}
-                            />
-                        )}
-                    </div>
+                {detail && apiBaseUrl && (
+                    <ShipmentDetailWorkspace
+                        detail={detail}
+                        apiBaseUrl={apiBaseUrl}
+                        wallet={wallet}
+                        role={role}
+                        onDetailReload={() => void reload()}
+                        headerActions={reportButton}
+                        backLink={backLink}
+                    />
                 )}
             </div>
 

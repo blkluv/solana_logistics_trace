@@ -8,8 +8,7 @@ import { AdminModal } from "@/components/admin/AdminModal";
 import { IncidentHubNavLink } from "@/components/incidents/IncidentHubNavLink";
 import { RecordCheckpointForm } from "@/components/admin/RecordCheckpointForm";
 import { ReportCriticalIncidentForm } from "@/components/admin/ReportCriticalIncidentForm";
-import { ShipmentDetailView } from "@/components/shipments/ShipmentDetailView";
-import { ShipmentIncidentsSection } from "@/components/shipments/ShipmentIncidentsSection";
+import { ShipmentDetailWorkspace } from "@/components/shipments/ShipmentDetailWorkspace";
 import { canReportCriticalIncidentAction } from "@/lib/admin/incidentActions";
 import { useShipmentDetail } from "@/lib/api/useShipmentDetail";
 import { canRecordCheckpointAction } from "@/lib/admin/shipmentActions";
@@ -74,21 +73,40 @@ export default function AdminShipmentDetailPage() {
         setReportOpen(false);
     }, [refreshAll, reload]);
 
+    const backLink = (
+        <p className="shipment-detail-v2__back admin-detail-back">
+            <Link prefetch={false} className="btn btn--ghost btn--sm" href="/admin">
+                ← Administración
+            </Link>
+            <IncidentHubNavLink />
+        </p>
+    );
+
+    const headerActions = detail ? (
+        <div className="admin-detail-actions">
+            <button
+                type="button"
+                className="btn btn--primary btn--sm"
+                title={recordGate.reason}
+                aria-disabled={!recordGate.enabled}
+                onClick={() => setRecordOpen(true)}
+            >
+                Registrar evento
+            </button>
+            <button
+                type="button"
+                className="btn btn--ghost btn--sm"
+                title={reportGate.reason}
+                aria-disabled={!reportGate.enabled}
+                onClick={() => setReportOpen(true)}
+            >
+                Reportar crítica
+            </button>
+        </div>
+    ) : null;
+
     return (
         <div className="admin-workspace admin-workspace--detail">
-            <p className="admin-detail-back">
-                <Link prefetch={false} className="btn btn--ghost btn--sm" href="/admin">
-                    ← Volver al listado
-                </Link>
-                <IncidentHubNavLink />
-            </p>
-            <header className="admin-page-header admin-page-header--compact">
-                <div className="admin-page-header__intro">
-                    <h1 className="admin-page-header__title">Detalle de envío</h1>
-                    <p className="admin-page-header__sub mono">{shipmentId}</p>
-                </div>
-            </header>
-
             {!cfg.apiBaseUrl?.trim() && (
                 <p className="text-muted text-sm" role="status">
                     Configure <code className="mono">NEXT_PUBLIC_API_BASE_URL</code>.
@@ -108,46 +126,18 @@ export default function AdminShipmentDetailPage() {
                 </p>
             )}
 
-            {detail && (
-                <>
-                    <ShipmentDetailView
-                        detail={detail}
-                        summaryVariant="grid"
-                        showCheckpointTable
-                        showTimeline
-                        showMap
-                        summaryAction={
-                            <div className="admin-detail-actions">
-                                <button
-                                    type="button"
-                                    className="btn btn--primary btn--sm"
-                                    title={recordGate.reason}
-                                    aria-disabled={!recordGate.enabled}
-                                    onClick={() => setRecordOpen(true)}
-                                >
-                                    Registrar evento
-                                </button>
-                                <button
-                                    type="button"
-                                    className="btn btn--ghost btn--sm"
-                                    title={reportGate.reason}
-                                    aria-disabled={!reportGate.enabled}
-                                    onClick={() => setReportOpen(true)}
-                                >
-                                    Reportar crítica
-                                </button>
-                            </div>
-                        }
-                    />
-                    {cfg.apiBaseUrl?.trim() ? (
-                        <ShipmentIncidentsSection
-                            apiBaseUrl={cfg.apiBaseUrl}
-                            shipmentId={shipmentId}
-                            wallet={wallet}
-                        />
-                    ) : null}
-                </>
-            )}
+            {detail && cfg.apiBaseUrl?.trim() ? (
+                <ShipmentDetailWorkspace
+                    detail={detail}
+                    apiBaseUrl={cfg.apiBaseUrl}
+                    wallet={wallet}
+                    role={role}
+                    onDetailReload={() => void reload()}
+                    headerActions={headerActions}
+                    showCheckpointTable
+                    backLink={backLink}
+                />
+            ) : null}
 
             <AdminModal
                 open={recordOpen}
