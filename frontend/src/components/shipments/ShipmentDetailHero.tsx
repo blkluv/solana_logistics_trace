@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
-import { IconMapPin, IconPackage, IconThermometer } from "@/components/ui/TraceIcons";
+import { ShipmentJourneyTimeline } from "@/components/shipments/ShipmentJourneyTimeline";
+import { IconPackage, IconThermometer } from "@/components/ui/TraceIcons";
 import type { ShipmentDetail } from "@/lib/api/shipments";
 import { statusBadgeClass, statusLabel } from "@/lib/shipments/display";
 import { formatParticipantLine, formatParticipantSub } from "@/lib/wallet/display";
@@ -65,20 +66,12 @@ export function ShipmentDetailHero({
                     </div>
                 </div>
 
-                <div className="shipment-hero__route" aria-label="Ruta del envío">
-                    <div className="shipment-hero__route-node">
-                        <span className="shipment-hero__route-label">Origen</span>
-                        <span className="shipment-hero__route-value">{detail.origin}</span>
-                    </div>
-                    <div className="shipment-hero__route-track" aria-hidden>
-                        <span className="shipment-hero__route-line" />
-                        <span className="shipment-hero__route-dot" />
-                    </div>
-                    <div className="shipment-hero__route-node shipment-hero__route-node--end">
-                        <span className="shipment-hero__route-label">Destino</span>
-                        <span className="shipment-hero__route-value">{detail.destination}</span>
-                    </div>
-                </div>
+                <ShipmentJourneyTimeline
+                    origin={detail.origin}
+                    destination={detail.destination}
+                    status={detail.status}
+                    checkpoints={detail.checkpoints}
+                />
 
                 <dl className="shipment-hero__metrics">
                     <div className="shipment-hero__metric">
@@ -122,28 +115,22 @@ export function ShipmentDetailHero({
 
                 <div className="shipment-hero__actors">
                     <div className="shipment-hero__actor">
-                        <IconMapPin className="trace-icon shipment-hero__actor-icon" />
-                        <div>
-                            <span className="shipment-hero__actor-role">Remitente</span>
-                            <span className="shipment-hero__actor-name">
-                                {formatParticipantLine(detail.senderParticipant)}
-                            </span>
-                            <span className="shipment-hero__actor-wallet mono">
-                                {formatParticipantSub(detail.senderParticipant)}
-                            </span>
-                        </div>
+                        <span className="shipment-hero__actor-role">Remitente</span>
+                        <span className="shipment-hero__actor-name">
+                            {formatParticipantLine(detail.senderParticipant)}
+                        </span>
+                        <span className="shipment-hero__actor-wallet mono">
+                            {formatParticipantSub(detail.senderParticipant)}
+                        </span>
                     </div>
                     <div className="shipment-hero__actor">
-                        <IconMapPin className="trace-icon shipment-hero__actor-icon" />
-                        <div>
-                            <span className="shipment-hero__actor-role">Destinatario</span>
-                            <span className="shipment-hero__actor-name">
-                                {formatParticipantLine(detail.recipientParticipant)}
-                            </span>
-                            <span className="shipment-hero__actor-wallet mono">
-                                {formatParticipantSub(detail.recipientParticipant)}
-                            </span>
-                        </div>
+                        <span className="shipment-hero__actor-role">Destinatario</span>
+                        <span className="shipment-hero__actor-name">
+                            {formatParticipantLine(detail.recipientParticipant)}
+                        </span>
+                        <span className="shipment-hero__actor-wallet mono">
+                            {formatParticipantSub(detail.recipientParticipant)}
+                        </span>
                     </div>
                 </div>
 
