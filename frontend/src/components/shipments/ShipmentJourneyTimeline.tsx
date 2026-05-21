@@ -35,7 +35,7 @@ export function ShipmentJourneyTimeline({
             <div className="shipment-journey__corridor">
                 <div className="shipment-journey__endpoint">
                     <span className="shipment-journey__endpoint-icon" aria-hidden>
-                        <IconMapPin />
+                        <IconMapPin className="trace-icon shipment-journey__endpoint-pin" />
                     </span>
                     <span className="shipment-journey__endpoint-tag">Origen</span>
                     <span className="shipment-journey__endpoint-coords mono">{from.label}</span>
@@ -45,7 +45,7 @@ export function ShipmentJourneyTimeline({
                 </div>
                 <div className="shipment-journey__endpoint shipment-journey__endpoint--dest">
                     <span className="shipment-journey__endpoint-icon" aria-hidden>
-                        <IconMapPin />
+                        <IconMapPin className="trace-icon shipment-journey__endpoint-pin" />
                     </span>
                     <span className="shipment-journey__endpoint-tag">Destino</span>
                     <span className="shipment-journey__endpoint-coords mono">{to.label}</span>
@@ -79,7 +79,10 @@ export function ShipmentJourneyTimeline({
                                         aria-hidden
                                     >
                                         <span className="shipment-journey__icon-wrap">
-                                            <JourneyStepIcon kind={step.icon} />
+                                            <JourneyStepIcon
+                                                kind={step.icon}
+                                                className="trace-icon shipment-journey__step-icon"
+                                            />
                                         </span>
                                         {eventRecorded && state !== "future" ? (
                                             <span className="shipment-journey__check" aria-hidden>
