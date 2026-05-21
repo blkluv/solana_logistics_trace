@@ -4,20 +4,34 @@
 
 import type { FlowStepState } from "@/lib/panel/shipmentLifecycle";
 
+export type JourneyStepIconKind =
+    | "created"
+    | "pickup"
+    | "hub"
+    | "transit"
+    | "out"
+    | "delivered";
+
 export type JourneyEventStep = {
     id: string;
     label: string;
+    icon: JourneyStepIconKind;
     checkpointTypes: readonly string[];
 };
 
 /** Orden de negocio: eventos que puede atravesar un envío en el MVP. */
 export const JOURNEY_EVENT_STEPS: readonly JourneyEventStep[] = [
-    { id: "created", label: "Creado", checkpointTypes: [] },
-    { id: "pickup", label: "Recogida", checkpointTypes: ["Pickup"] },
-    { id: "hub", label: "En hub", checkpointTypes: ["HubIn", "HubOut"] },
-    { id: "transit", label: "En tránsito", checkpointTypes: ["Transit"] },
-    { id: "out", label: "En reparto", checkpointTypes: ["DeliveryAttempt"] },
-    { id: "delivered", label: "Entregado", checkpointTypes: ["Delivered"] },
+    { id: "created", label: "Creado", icon: "created", checkpointTypes: [] },
+    { id: "pickup", label: "Recogida", icon: "pickup", checkpointTypes: ["Pickup"] },
+    { id: "hub", label: "En hub", icon: "hub", checkpointTypes: ["HubIn", "HubOut"] },
+    { id: "transit", label: "En tránsito", icon: "transit", checkpointTypes: ["Transit"] },
+    { id: "out", label: "En reparto", icon: "out", checkpointTypes: ["DeliveryAttempt"] },
+    {
+        id: "delivered",
+        label: "Entregado",
+        icon: "delivered",
+        checkpointTypes: ["Delivered"],
+    },
 ] as const;
 
 export type CoordEndpoint = {

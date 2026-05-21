@@ -1,5 +1,6 @@
 "use client";
 
+import { JourneyStepIcon, IconMapPin } from "@/components/ui/TraceIcons";
 import type { CheckpointItem } from "@/lib/api/shipments";
 import {
     exceptionStatusLabel,
@@ -33,6 +34,9 @@ export function ShipmentJourneyTimeline({
         <section className="shipment-journey" aria-label="Recorrido y etapas del envío">
             <div className="shipment-journey__corridor">
                 <div className="shipment-journey__endpoint">
+                    <span className="shipment-journey__endpoint-icon" aria-hidden>
+                        <IconMapPin />
+                    </span>
                     <span className="shipment-journey__endpoint-tag">Origen</span>
                     <span className="shipment-journey__endpoint-coords mono">{from.label}</span>
                 </div>
@@ -40,6 +44,9 @@ export function ShipmentJourneyTimeline({
                     <span className="shipment-journey__corridor-track" />
                 </div>
                 <div className="shipment-journey__endpoint shipment-journey__endpoint--dest">
+                    <span className="shipment-journey__endpoint-icon" aria-hidden>
+                        <IconMapPin />
+                    </span>
                     <span className="shipment-journey__endpoint-tag">Destino</span>
                     <span className="shipment-journey__endpoint-coords mono">{to.label}</span>
                 </div>
@@ -67,8 +74,13 @@ export function ShipmentJourneyTimeline({
                                 .join(" ");
                             return (
                                 <li key={step.id} className={cls}>
-                                    <span className="shipment-journey__marker" aria-hidden>
-                                        <span className="shipment-journey__dot" />
+                                    <span
+                                        className={`shipment-journey__marker shipment-journey__marker--${step.icon}`}
+                                        aria-hidden
+                                    >
+                                        <span className="shipment-journey__icon-wrap">
+                                            <JourneyStepIcon kind={step.icon} />
+                                        </span>
                                         {eventRecorded && state !== "future" ? (
                                             <span className="shipment-journey__check" aria-hidden>
                                                 ✓
