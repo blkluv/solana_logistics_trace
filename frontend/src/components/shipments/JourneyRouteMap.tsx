@@ -59,9 +59,11 @@ function FitRouteBounds({ points }: { points: JourneyRoutePoint[] }) {
 
 export type JourneyRouteMapProps = {
     points: JourneyRoutePoint[];
+    /** `aside` = tarjeta Recorrido del detalle; `journey` = bloque en timeline (legacy). */
+    placement?: "aside" | "journey";
 };
 
-export function JourneyRouteMap({ points }: JourneyRouteMapProps) {
+export function JourneyRouteMap({ points, placement = "journey" }: JourneyRouteMapProps) {
     useEffect(() => {
         ensureLeafletIcons();
     }, []);
@@ -79,9 +81,19 @@ export function JourneyRouteMap({ points }: JourneyRouteMapProps) {
     const center = positions[0] ?? DEFAULT_CENTER;
     const zoom = positions.length === 1 ? 10 : DEFAULT_ZOOM;
 
+    const rootClass =
+        placement === "aside" ? "journey-route-map journey-route-map--aside" : "shipment-journey__map";
+    const canvasClass =
+        placement === "aside"
+            ? "journey-route-map__canvas"
+            : "shipment-journey__map-canvas";
+
     if (points.length === 0) {
         return (
-            <div className="shipment-journey__map shipment-journey__map--empty" data-testid="journey-route-map-empty">
+            <div
+                className={`${rootClass} ${rootClass}--empty`}
+                data-testid="journey-route-map-empty"
+            >
                 <p className="text-sm text-muted mb-0">
                     Sin coordenadas de origen o destino para mostrar el mapa.
                 </p>
@@ -90,12 +102,12 @@ export function JourneyRouteMap({ points }: JourneyRouteMapProps) {
     }
 
     return (
-        <div className="shipment-journey__map" data-testid="journey-route-map">
+        <div className={rootClass} data-testid="journey-route-map">
             <MapContainer
                 key={mapKey}
                 center={center}
                 zoom={zoom}
-                className="shipment-journey__map-canvas"
+                className={canvasClass}
                 scrollWheelZoom={false}
                 dragging
                 aria-label="Mapa del recorrido: origen y destino"
