@@ -32,6 +32,16 @@ import { CheckpointTypeCode as Cp } from "@/lib/solana/ix";
 import { createRecordCheckpointIx } from "@/lib/solana/instructions";
 import { validateRecordCheckpointPreflight } from "@/lib/solana/chainPreflight";
 import { fetchProgramConfig } from "@/lib/solana/program_config";
+import {
+    formatMeterSnapshotSummary,
+    humidityPctToChain,
+    meterSnapshotToFormFields,
+    parseCheckpointHumidityForChain,
+    parseCheckpointTemperatureForChain,
+    temperatureCelsiusToChain,
+    type MeterSnapshot,
+} from "@/lib/telemetry/meterSnapshot";
+import { useMeterSnapshot } from "@/lib/telemetry/useMeterSnapshot";
 
 const FALLBACK_CP_ROWS: CatalogOptionRow<CheckpointTypeCode>[] = [
     { code: "Pickup", label: "Pickup", value: Cp.Pickup },
@@ -50,13 +60,40 @@ function coordsForChain(p: GeoPoint | null): { lat: number | null; lng: number |
     return { lat: Math.round(p.lat), lng: Math.round(p.lng) };
 }
 
+function resolveMeterValuesForSubmit(
+    snapshot: MeterSnapshot | null,
+    coordValue: string,
+    coordMode: LocationInputMode,
+    temp: string,
+    humidity: string,
+): {
+    coords: GeoPoint | null;
+    temperature: number | null;
+    humidity: number | null;
+} {
+    const coords =
+        snapshot?.coordinates ??
+        (coordMode === "coordinates" ? parseGeoPoint(coordValue) : null);
+    const temperature =
+        snapshot?.temperatureCelsius != null
+            ? temperatureCelsiusToChain(snapshot.temperatureCelsius)
+            : parseCheckpointTemperatureForChain(temp);
+    const hum =
+        snapshot?.humidityPct != null
+            ? humidityPctToChain(snapshot.humidityPct)
+            : parseCheckpointHumidityForChain(humidity);
+    return { coords, temperature, humidity: hum };
+}
+
 export type RecordCheckpointFormProps = {
     connection: Connection;
     programId: PublicKey;
     payer: PublicKey;
     shipmentPda: PublicKey;
     onChainShipmentId: string;
+    shipmentServiceId: string;
     apiBaseUrl: string;
+    wallet: string;
     role: string | null;
     onSuccess: () => void;
 };
@@ -67,7 +104,9 @@ export function RecordCheckpointForm({
     payer,
     shipmentPda,
     onChainShipmentId,
+    shipmentServiceId,
     apiBaseUrl,
+    wallet,
     role,
     onSuccess,
 }: RecordCheckpointFormProps) {
@@ -91,6 +130,44 @@ export function RecordCheckpointForm({
     const [catalogsLoading, setCatalogsLoading] = useState(false);
     const [busy, setBusy] = useState(false);
     const [banner, setBanner] = useState<{ kind: "ok" | "err" | "info"; text: string } | null>(null);
+
+    const {
+        snapshot: meterSnapshot,
+        loading: metersLoading,
+        error: metersError,
+        refresh: refreshMeters,
+    } = useMeterSnapshot(
+        apiBaseWellFormed ? apiBaseTrimmed : undefined,
+        shipmentServiceId,
+        wallet,
+    );
+
+    const applySnapshotToForm = useCallback((snap: MeterSnapshot) => {
+        const fields = meterSnapshotToFormFields(snap);
+        if (fields.coordValue) {
+            setCoordValue(fields.coordValue);
+            setCoordMode("coordinates");
+        }
+        if (fields.temp) {
+            setTemp(fields.temp);
+        }
+        if (fields.humidity) {
+            setHumidity(fields.humidity);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (meterSnapshot) {
+            applySnapshotToForm(meterSnapshot);
+        }
+    }, [meterSnapshot, applySnapshotToForm]);
+
+    const onRefreshMeters = useCallback(async () => {
+        const fresh = await refreshMeters();
+        if (fresh) {
+            applySnapshotToForm(fresh);
+        }
+    }, [refreshMeters, applySnapshotToForm]);
 
     const allCpRows = apiCpRows ?? FALLBACK_CP_ROWS;
     const allowedCodes = checkpointTypeCodesForRole(role);
@@ -151,13 +228,25 @@ export function RecordCheckpointForm({
                 setBanner({ kind: "err", text: preflightErr });
                 return;
             }
+            const freshMeters = apiBaseWellFormed ? await refreshMeters() : null;
+            const metersForTx = freshMeters ?? meterSnapshot;
+            if (freshMeters) {
+                applySnapshotToForm(freshMeters);
+            }
+
             const cur = await fetchProgramConfig(connection, programId);
             if (!cur) throw new Error("Programa no activo");
             const nextCp = cur.decoded.checkpointsRecorded + BigInt(1);
-            const coords = coordMode === "coordinates" ? parseGeoPoint(coordValue) : null;
+
+            const { coords, temperature: tmpNum, humidity: humNum } = resolveMeterValuesForSubmit(
+                metersForTx,
+                coordValue,
+                coordMode,
+                temp,
+                humidity,
+            );
             const { lat: latNum, lng: lngNum } = coordsForChain(coords);
-            const coordPreview =
-                coords !== null ? { lat: coords.lat, lng: coords.lng } : null;
+            const coordPreview = coords !== null ? { lat: coords.lat, lng: coords.lng } : null;
             const { json: metaOut, error: metaErr } = buildCheckpointMetadataJson(
                 metadataForm,
                 coordPreview,
@@ -166,9 +255,6 @@ export function RecordCheckpointForm({
                 setBanner({ kind: "err", text: metaErr });
                 return;
             }
-            const tmpNum: number | null = temp.trim() === "" ? null : Number.parseInt(temp, 10);
-            const humNum: number | null =
-                humidity.trim() === "" ? null : Number.parseInt(humidity, 10);
             const sig = await confirmSerializedTx(
                 connection,
                 payer,
@@ -224,6 +310,10 @@ export function RecordCheckpointForm({
         humidity,
         metadataForm,
         apiBaseUrl,
+        apiBaseWellFormed,
+        meterSnapshot,
+        refreshMeters,
+        applySnapshotToForm,
         onSuccess,
     ]);
 
@@ -231,6 +321,8 @@ export function RecordCheckpointForm({
         loading: catalogsLoading,
         fromApi: Boolean(apiBaseWellFormed && apiCpRows),
     });
+
+    const meterSummary = meterSnapshot ? formatMeterSnapshotSummary(meterSnapshot) : null;
 
     return (
         <form
@@ -251,6 +343,36 @@ export function RecordCheckpointForm({
             </p>
             <p className="text-sm text-muted mb-2">{recordCheckpointRoleHint(role)}</p>
             <p className="text-sm text-muted mb-2">{footnote}</p>
+
+            {apiBaseWellFormed ? (
+                <div className="admin-form__meters" role="region" aria-label="Lecturas de medidores">
+                    <div className="admin-form__meters-head">
+                        <span className="admin-form__meters-title">Medidores simulados</span>
+                        <button
+                            type="button"
+                            className="btn btn--ghost btn--sm"
+                            disabled={busy || metersLoading}
+                            onClick={() => void onRefreshMeters()}
+                        >
+                            {metersLoading ? "Cargando…" : "Actualizar lecturas"}
+                        </button>
+                    </div>
+                    {metersError ? (
+                        <p className="text-sm admin-form__err mb-0" role="alert">
+                            {metersError}
+                        </p>
+                    ) : meterSummary ? (
+                        <p className="text-sm text-muted mb-0">
+                            Al registrar se usarán: <span className="mono">{meterSummary}</span>
+                        </p>
+                    ) : (
+                        <p className="text-sm text-muted mb-0" role="status">
+                            Sin telemetría reciente para este envío. El monitoreo activo genera
+                            lecturas periódicas; puede actualizar antes de firmar.
+                        </p>
+                    )}
+                </div>
+            ) : null}
 
             <div className="form-row">
                 <div className="form-group">
@@ -282,7 +404,7 @@ export function RecordCheckpointForm({
             </div>
             <GeoPointField
                 id="admin-cp-coords"
-                label="Coordenadas del evento (opcional)"
+                label="Coordenadas del evento"
                 value={coordValue}
                 onChange={setCoordValue}
                 disabled={busy}
@@ -291,23 +413,25 @@ export function RecordCheckpointForm({
             />
             <div className="form-row">
                 <div className="form-group">
-                    <label htmlFor="admin-cp-temp">Temp. °C (opc.)</label>
+                    <label htmlFor="admin-cp-temp">Temp. °C</label>
                     <input
                         id="admin-cp-temp"
                         className="input mono"
                         value={temp}
                         disabled={busy}
                         onChange={(e) => setTemp(e.target.value)}
+                        placeholder="Desde medidor"
                     />
                 </div>
                 <div className="form-group">
-                    <label htmlFor="admin-cp-hum">Humedad (opc.)</label>
+                    <label htmlFor="admin-cp-hum">Humedad %</label>
                     <input
                         id="admin-cp-hum"
                         className="input mono"
                         value={humidity}
                         disabled={busy}
                         onChange={(e) => setHumidity(e.target.value)}
+                        placeholder="Desde medidor"
                     />
                 </div>
             </div>
