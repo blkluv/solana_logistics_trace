@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
@@ -9,24 +8,13 @@ import { CheckpointTable } from "@/components/shipments/CheckpointTable";
 import { ShipmentDetailHero } from "@/components/shipments/ShipmentDetailHero";
 import { ShipmentIncidentCard } from "@/components/shipments/ShipmentIncidentCard";
 import { ShipmentMonitoringGlance } from "@/components/shipments/ShipmentMonitoringGlance";
+import { ShipmentRecorridoAside } from "@/components/shipments/ShipmentRecorridoAside";
 import { ShipmentTimelineTrack } from "@/components/shipments/ShipmentTimelineTrack";
 import { useShipmentIncidents } from "@/lib/api/useShipmentIncidents";
 import { useShipmentTelemetry } from "@/lib/api/useShipmentTelemetry";
 import type { ShipmentDetail } from "@/lib/api/shipments";
 import { canResolveIncident } from "@/lib/panel/capabilities";
 import { buildMonitoringGlance } from "@/lib/telemetry/monitoringGlance";
-
-const MapViewLazy = dynamic(
-    () => import("@/components/panel/MapView").then((m) => ({ default: m.MapView })),
-    {
-        ssr: false,
-        loading: () => (
-            <div className="shipment-detail-pro__map-skeleton text-sm text-muted">
-                Cargando mapa…
-            </div>
-        ),
-    },
-);
 
 type DetailTab = "timeline" | "incidents";
 
@@ -189,9 +177,11 @@ export function ShipmentDetailWorkspace({
                 <aside className="shipment-detail-pro__aside">
                     <div className="shipment-detail-pro__aside-card shipment-detail-pro__aside-card--map">
                         <h2 className="shipment-detail-pro__aside-title">Recorrido</h2>
-                        <div className="shipment-detail-pro__map">
-                            <MapViewLazy checkpoints={detail.checkpoints} />
-                        </div>
+                        <ShipmentRecorridoAside
+                            origin={detail.origin}
+                            destination={detail.destination}
+                            apiBaseUrl={apiBaseUrl}
+                        />
                     </div>
 
                     {showMonitoring ? (
