@@ -1,28 +1,17 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
 
 import { ShipmentOperationalDetails } from "@/components/shipments/ShipmentOperationalDetails";
 import { CheckpointTable } from "@/components/shipments/CheckpointTable";
 import { CheckpointTimeline } from "@/components/panel/CheckpointTimeline";
+import { ShipmentRecorridoAside } from "@/components/shipments/ShipmentRecorridoAside";
 import { statusBadgeClass } from "@/lib/shipments/display";
 import type { ShipmentDetail } from "@/lib/api/shipments";
 
-const MapViewLazy = dynamic(
-    () => import("@/components/panel/MapView").then((m) => ({ default: m.MapView })),
-    {
-        ssr: false,
-        loading: () => (
-            <div className="shipment-detail__map-skeleton text-sm text-muted">
-                Cargando mapa…
-            </div>
-        ),
-    },
-);
-
 export type ShipmentDetailViewProps = {
     detail: ShipmentDetail;
+    apiBaseUrl?: string;
     lead?: ReactNode;
     summaryVariant?: "grid" | "prose";
     showCheckpointTable?: boolean;
@@ -143,6 +132,7 @@ function SummaryProse({ detail }: { detail: ShipmentDetail }) {
 
 export function ShipmentDetailView({
     detail,
+    apiBaseUrl,
     lead,
     summaryVariant = "prose",
     showCheckpointTable = false,
@@ -198,8 +188,13 @@ export function ShipmentDetailView({
                                 <div className="card__hd">
                                     {showCheckpointTable ? "Mapa de puntos" : "Mapa"}
                                 </div>
-                                <div className="card__bd shipment-detail__map">
-                                    <MapViewLazy checkpoints={detail.checkpoints} />
+                                <div className="card__bd">
+                                    <ShipmentRecorridoAside
+                                        origin={detail.origin}
+                                        destination={detail.destination}
+                                        apiBaseUrl={apiBaseUrl}
+                                        variant="public"
+                                    />
                                 </div>
                             </div>
                         </div>
