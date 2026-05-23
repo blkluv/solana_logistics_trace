@@ -84,6 +84,7 @@ export function ShipmentDetailWorkspace({
             <ShipmentDetailHero
                 detail={detail}
                 openIncidentCount={openCount}
+                apiBaseUrl={apiBaseUrl}
                 headerActions={headerActions}
                 backLink={backLink}
             />

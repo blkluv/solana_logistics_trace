@@ -8,6 +8,8 @@ export type ShipmentStatusRailProps = {
     origin?: string;
     destination?: string;
     checkpoints?: CheckpointItem[];
+    createdAt?: string;
+    apiBaseUrl?: string;
 };
 
 /**
@@ -18,6 +20,8 @@ export function ShipmentStatusRail({
     origin = "—",
     destination = "—",
     checkpoints = [],
+    createdAt = new Date(0).toISOString(),
+    apiBaseUrl,
 }: ShipmentStatusRailProps) {
     return (
         <ShipmentJourneyTimeline
@@ -25,6 +29,8 @@ export function ShipmentStatusRail({
             destination={destination}
             status={status}
             checkpoints={checkpoints}
+            createdAt={createdAt}
+            apiBaseUrl={apiBaseUrl}
         />
     );
 }

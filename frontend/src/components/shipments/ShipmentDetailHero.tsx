@@ -9,6 +9,7 @@ import { formatParticipantLine, formatParticipantSub } from "@/lib/wallet/displa
 export type ShipmentDetailHeroProps = {
     detail: ShipmentDetail;
     openIncidentCount: number;
+    apiBaseUrl?: string;
     headerActions?: ReactNode;
     backLink?: ReactNode;
 };
@@ -27,6 +28,7 @@ function formatDate(iso: string): string {
 export function ShipmentDetailHero({
     detail,
     openIncidentCount,
+    apiBaseUrl,
     headerActions,
     backLink,
 }: ShipmentDetailHeroProps) {
@@ -76,6 +78,8 @@ export function ShipmentDetailHero({
                     destination={detail.destination}
                     status={detail.status}
                     checkpoints={detail.checkpoints}
+                    createdAt={detail.createdAt}
+                    apiBaseUrl={apiBaseUrl}
                 />
 
                 <dl className="shipment-hero__metrics">
