@@ -6,32 +6,45 @@ import { useLocationsCatalog } from "@/lib/api/useLocationsCatalog";
 import { resolveEndpointDisplay } from "@/lib/shipments/locationEndpoint";
 import { resolveJourneyRoutePoints } from "@/lib/shipments/journeyRouteMap";
 
-const JourneyRouteMapLazy = dynamic(
-    () =>
-        import("@/components/shipments/JourneyRouteMap").then((m) => ({
-            default: m.JourneyRouteMap,
-        })),
-    {
-        ssr: false,
-        loading: () => (
-            <div
-                className="shipment-detail-pro__map-skeleton text-sm text-muted"
-                role="status"
-            >
-                Cargando mapa…
-            </div>
-        ),
-    },
-);
+function mapWrapClass(variant: ShipmentRecorridoAsideProps["variant"]): string {
+    return variant === "public" ? "shipment-detail__map" : "shipment-detail-pro__map";
+}
+
+function journeyRouteMapLazy(skeletonClass: string) {
+    return dynamic(
+        () =>
+            import("@/components/shipments/JourneyRouteMap").then((m) => ({
+                default: m.JourneyRouteMap,
+            })),
+        {
+            ssr: false,
+            loading: () => (
+                <div className={`${skeletonClass} text-sm text-muted`} role="status">
+                    Cargando mapa…
+                </div>
+            ),
+        },
+    );
+}
+
+const JourneyRouteMapProLazy = journeyRouteMapLazy("shipment-detail-pro__map-skeleton");
+const JourneyRouteMapPublicLazy = journeyRouteMapLazy("shipment-detail__map-skeleton");
 
 export type ShipmentRecorridoAsideProps = {
     origin: string;
     destination: string;
     apiBaseUrl?: string;
+    /** `pro` = panel detalle; `public` = consulta pública `/envios`. */
+    variant?: "pro" | "public";
 };
 
-/** Mapa origen/destino para la tarjeta lateral «Recorrido» (columna junto a Trazabilidad). */
-export function ShipmentRecorridoAside({ origin, destination, apiBaseUrl }: ShipmentRecorridoAsideProps) {
+/** Mapa origen/destino (tarjeta Recorrido del panel o sección Mapa de consulta pública). */
+export function ShipmentRecorridoAside({
+    origin,
+    destination,
+    apiBaseUrl,
+    variant = "pro",
+}: ShipmentRecorridoAsideProps) {
     const { items: locationCatalog } = useLocationsCatalog(apiBaseUrl);
     const originDisplay = resolveEndpointDisplay(origin, locationCatalog);
     const destinationDisplay = resolveEndpointDisplay(destination, locationCatalog);
@@ -42,6 +55,8 @@ export function ShipmentRecorridoAside({ origin, destination, apiBaseUrl }: Ship
         originDisplay.title,
         destinationDisplay.title,
     );
+    const JourneyRouteMapLazy =
+        variant === "public" ? JourneyRouteMapPublicLazy : JourneyRouteMapProLazy;
 
     return (
         <>
@@ -54,7 +69,7 @@ export function ShipmentRecorridoAside({ origin, destination, apiBaseUrl }: Ship
                 <span className="shipment-detail-pro__route-summary-label">Destino</span>
                 {destinationDisplay.title}
             </p>
-            <div className="shipment-detail-pro__map">
+            <div className={mapWrapClass(variant)}>
                 <JourneyRouteMapLazy points={routePoints} placement="aside" />
             </div>
         </>

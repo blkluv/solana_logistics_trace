@@ -54,6 +54,7 @@ export function PublicShipmentDetailClient() {
                     <div className="mt-2">
                         <ShipmentDetailView
                             detail={detail}
+                            apiBaseUrl={apiBaseUrl}
                             lead={
                                 <div className="card">
                                     <div className="card__bd">

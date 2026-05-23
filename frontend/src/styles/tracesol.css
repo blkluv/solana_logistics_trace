@@ -1421,6 +1421,17 @@ table.data-table {
 
 .shipment-detail__map {
   min-height: 220px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.shipment-detail__map .leaflet-container {
+  font-family: inherit;
+}
+
+.shipment-detail__map .journey-route-map__canvas {
+  height: 14rem;
+  min-height: 220px;
 }
 
 .shipment-detail__map-skeleton {
