@@ -1,5 +1,7 @@
 "use client";
 
+import dynamic from "next/dynamic";
+
 import { JourneyStepTooltip } from "@/components/shipments/JourneyStepTooltip";
 import { JourneyStepIcon, IconMapPin } from "@/components/ui/TraceIcons";
 import { useLocationsCatalog } from "@/lib/api/useLocationsCatalog";
@@ -13,6 +15,22 @@ import {
     resolveJourneyStepStates,
     resolveNowStepId,
 } from "@/lib/shipments/journeyTimeline";
+import { resolveJourneyRoutePoints } from "@/lib/shipments/journeyRouteMap";
+
+const JourneyRouteMapLazy = dynamic(
+    () =>
+        import("@/components/shipments/JourneyRouteMap").then((m) => ({
+            default: m.JourneyRouteMap,
+        })),
+    {
+        ssr: false,
+        loading: () => (
+            <div className="shipment-journey__map shipment-journey__map--loading" role="status">
+                <p className="text-sm text-muted mb-0">Cargando mapa del recorrido…</p>
+            </div>
+        ),
+    },
+);
 
 export type ShipmentJourneyTimelineProps = {
     origin: string;
@@ -54,8 +72,17 @@ export function ShipmentJourneyTimeline({
         checkpoints,
     );
 
+    const routePoints = resolveJourneyRoutePoints(
+        origin,
+        destination,
+        locationCatalog,
+        originDisplay.title,
+        destinationDisplay.title,
+    );
+
     return (
         <section className="shipment-journey" aria-label="Recorrido y etapas del envío">
+            <div className="shipment-journey__route-panel">
             <div className="shipment-journey__corridor">
                 <JourneyStepTooltip id="endpoint-origin" insight={originInsight}>
                     <div className="shipment-journey__endpoint">
@@ -94,6 +121,8 @@ export function ShipmentJourneyTimeline({
                         ) : null}
                     </div>
                 </JourneyStepTooltip>
+            </div>
+            <JourneyRouteMapLazy points={routePoints} />
             </div>
 
             <div className="shipment-journey__rail-wrap">
