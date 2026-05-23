@@ -2,7 +2,10 @@
  * Línea de tiempo del ciclo logístico (estados + eventos on-chain).
  */
 
+import type { CheckpointItem } from "@/lib/api/shipments";
 import type { FlowStepState } from "@/lib/panel/shipmentLifecycle";
+import { checkpointTypeLabel, formatOccurredAt } from "@/lib/shipments/checkpointDisplay";
+import { statusLabel } from "@/lib/shipments/display";
 
 export type JourneyStepIconKind =
     | "created"
@@ -23,8 +26,8 @@ export type JourneyEventStep = {
 export const JOURNEY_EVENT_STEPS: readonly JourneyEventStep[] = [
     { id: "created", label: "Creado", icon: "created", checkpointTypes: [] },
     { id: "pickup", label: "Recogida", icon: "pickup", checkpointTypes: ["Pickup"] },
-    { id: "hub", label: "En hub", icon: "hub", checkpointTypes: ["HubIn", "HubOut"] },
     { id: "transit", label: "En tránsito", icon: "transit", checkpointTypes: ["Transit"] },
+    { id: "hub", label: "En hub", icon: "hub", checkpointTypes: ["HubIn", "HubOut"] },
     { id: "out", label: "En reparto", icon: "out", checkpointTypes: ["DeliveryAttempt"] },
     {
         id: "delivered",
@@ -64,9 +67,9 @@ function statusToStepIndex(status: string): number {
     switch (status) {
         case "Created":
             return 0;
-        case "AtHub":
-            return 2;
         case "InTransit":
+            return 2;
+        case "AtHub":
             return 3;
         case "OutForDelivery":
             return 4;
@@ -85,6 +88,86 @@ export type ResolvedJourneyStep = {
     state: FlowStepState;
     eventRecorded: boolean;
 };
+
+export type JourneyStepInsight = {
+    lines: string[];
+};
+
+function latestCheckpointForTypes(
+    checkpoints: readonly CheckpointItem[],
+    types: readonly string[],
+): CheckpointItem | null {
+    const allowed = new Set(types);
+    let best: CheckpointItem | null = null;
+    for (const c of checkpoints) {
+        if (!allowed.has(c.type)) {
+            continue;
+        }
+        if (!best || c.occurredAt > best.occurredAt) {
+            best = c;
+        }
+    }
+    return best;
+}
+
+export function buildJourneyStepInsight(
+    step: JourneyEventStep,
+    state: FlowStepState,
+    checkpoints: readonly CheckpointItem[],
+    createdAt: string,
+): JourneyStepInsight {
+    if (step.id === "created") {
+        if (state === "future") {
+            return { lines: ["Pendiente de registro"] };
+        }
+        return { lines: ["Envío creado", formatOccurredAt(createdAt)] };
+    }
+
+    const recorded = latestCheckpointForTypes(checkpoints, step.checkpointTypes);
+    if (recorded) {
+        const lines = [checkpointTypeLabel(recorded.type), formatOccurredAt(recorded.occurredAt)];
+        if (recorded.location) {
+            lines.push(recorded.location);
+        }
+        if (recorded.actorDisplayName) {
+            lines.push(recorded.actorDisplayName);
+        }
+        return { lines };
+    }
+
+    if (state === "current") {
+        return { lines: [step.label, "Etapa actual del envío"] };
+    }
+    if (state === "past") {
+        return { lines: [step.label, "Etapa superada"] };
+    }
+    if (state === "offpath") {
+        return { lines: [step.label, "Fuera del flujo habitual"] };
+    }
+    return { lines: [step.label, "Pendiente"] };
+}
+
+export function buildEndpointInsight(
+    kind: "origin" | "destination",
+    displayTitle: string,
+    displaySubtitle: string | null,
+    checkpoints: readonly CheckpointItem[],
+): JourneyStepInsight {
+    const related =
+        kind === "origin"
+            ? latestCheckpointForTypes(checkpoints, ["Pickup"])
+            : latestCheckpointForTypes(checkpoints, ["Delivered", "DeliveryAttempt"]);
+    const lines = [kind === "origin" ? "Origen" : "Destino", displayTitle];
+    if (displaySubtitle) {
+        lines.push(displaySubtitle);
+    }
+    if (related) {
+        lines.push(`${checkpointTypeLabel(related.type)} · ${formatOccurredAt(related.occurredAt)}`);
+    } else if (kind === "destination") {
+        lines.push("Entrega pendiente");
+    }
+    return { lines };
+}
 
 export function resolveJourneyStepStates(
     status: string,
@@ -130,4 +213,12 @@ export function exceptionStatusLabel(status: string): string | null {
         return "Envío devuelto";
     }
     return null;
+}
+
+export function journeyRailStatusCaption(status: string): string {
+    const exception = exceptionStatusLabel(status);
+    if (exception) {
+        return exception;
+    }
+    return statusLabel(status);
 }
