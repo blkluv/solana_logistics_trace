@@ -1073,6 +1073,30 @@ table.data-table {
   color: var(--color-danger);
 }
 
+.admin-form__meters {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.75rem;
+  background: var(--color-bg-page);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.admin-form__meters-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.admin-form__meters-title {
+  font-size: 0.78rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
 .geo-point-field {
   border: none;
   margin: 0 0 1rem;

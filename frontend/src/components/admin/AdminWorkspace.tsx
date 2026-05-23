@@ -179,7 +179,7 @@ export function AdminWorkspace() {
                         </p>
                     )
                 ) : null}
-                {openModal === "record_checkpoint" && programId && payer ? (
+                {openModal === "record_checkpoint" && programId && payer && wallet ? (
                     recordShipment && recordShipmentPda ? (
                         <RecordCheckpointForm
                             connection={connection}
@@ -187,7 +187,9 @@ export function AdminWorkspace() {
                             payer={payer}
                             shipmentPda={recordShipmentPda}
                             onChainShipmentId={recordShipment.onChainShipmentId}
+                            shipmentServiceId={recordShipment.shipmentId}
                             apiBaseUrl={cfg.apiBaseUrl}
+                            wallet={wallet}
                             role={role}
                             onSuccess={() => void onFormSuccess()}
                         />

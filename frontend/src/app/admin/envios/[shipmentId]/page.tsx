@@ -149,14 +149,16 @@ export default function AdminShipmentDetailPage() {
                     <p className="text-sm mb-0" role="status">
                         {recordGate.reason ?? "No puede registrar eventos con su rol o perfil actual."}
                     </p>
-                ) : programId && payer && detail && shipmentPda ? (
+                ) : programId && payer && wallet && detail && shipmentPda ? (
                     <RecordCheckpointForm
                         connection={connection}
                         programId={programId}
                         payer={payer}
                         shipmentPda={shipmentPda}
                         onChainShipmentId={detail.onChainShipmentId}
+                        shipmentServiceId={detail.shipmentId}
                         apiBaseUrl={cfg.apiBaseUrl}
+                        wallet={wallet}
                         role={role}
                         onSuccess={() => void onRecordSuccess()}
                     />
