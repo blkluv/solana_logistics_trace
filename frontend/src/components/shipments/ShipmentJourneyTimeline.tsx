@@ -1,19 +1,25 @@
 "use client";
 
+import { JourneyStepTooltip } from "@/components/shipments/JourneyStepTooltip";
 import { JourneyStepIcon, IconMapPin } from "@/components/ui/TraceIcons";
+import { useLocationsCatalog } from "@/lib/api/useLocationsCatalog";
 import type { CheckpointItem } from "@/lib/api/shipments";
+import { resolveEndpointDisplay } from "@/lib/shipments/locationEndpoint";
 import {
+    buildEndpointInsight,
+    buildJourneyStepInsight,
     exceptionStatusLabel,
-    parseCoordEndpoint,
+    journeyRailStatusCaption,
     resolveJourneyStepStates,
 } from "@/lib/shipments/journeyTimeline";
-import { statusLabel } from "@/lib/shipments/display";
 
 export type ShipmentJourneyTimelineProps = {
     origin: string;
     destination: string;
     status: string;
     checkpoints: CheckpointItem[];
+    createdAt: string;
+    apiBaseUrl?: string;
 };
 
 export function ShipmentJourneyTimeline({
@@ -21,42 +27,74 @@ export function ShipmentJourneyTimeline({
     destination,
     status,
     checkpoints,
+    createdAt,
+    apiBaseUrl,
 }: ShipmentJourneyTimelineProps) {
-    const from = parseCoordEndpoint(origin);
-    const to = parseCoordEndpoint(destination);
+    const { items: locationCatalog } = useLocationsCatalog(apiBaseUrl);
+    const originDisplay = resolveEndpointDisplay(origin, locationCatalog);
+    const destinationDisplay = resolveEndpointDisplay(destination, locationCatalog);
     const logisticsTypes = checkpoints
         .filter((c) => c.type !== "SensorData" && !c.actor.startsWith("system@"))
         .map((c) => c.type);
     const steps = resolveJourneyStepStates(status, logisticsTypes);
     const exception = exceptionStatusLabel(status);
 
+    const originInsight = buildEndpointInsight(
+        "origin",
+        originDisplay.title,
+        originDisplay.subtitle,
+        checkpoints,
+    );
+    const destinationInsight = buildEndpointInsight(
+        "destination",
+        destinationDisplay.title,
+        destinationDisplay.subtitle,
+        checkpoints,
+    );
+
     return (
         <section className="shipment-journey" aria-label="Recorrido y etapas del envío">
             <div className="shipment-journey__corridor">
-                <div className="shipment-journey__endpoint">
-                    <span className="shipment-journey__endpoint-icon" aria-hidden>
-                        <IconMapPin className="trace-icon shipment-journey__endpoint-pin" />
-                    </span>
-                    <span className="shipment-journey__endpoint-tag">Origen</span>
-                    <span className="shipment-journey__endpoint-coords mono">{from.label}</span>
-                </div>
+                <JourneyStepTooltip id="endpoint-origin" insight={originInsight}>
+                    <div className="shipment-journey__endpoint">
+                        <span className="shipment-journey__endpoint-icon" aria-hidden>
+                            <IconMapPin className="trace-icon shipment-journey__endpoint-pin" />
+                        </span>
+                        <span className="shipment-journey__endpoint-tag">Origen</span>
+                        <span className="shipment-journey__endpoint-title">{originDisplay.title}</span>
+                        {originDisplay.subtitle ? (
+                            <span className="shipment-journey__endpoint-sub">
+                                {originDisplay.subtitle}
+                            </span>
+                        ) : null}
+                    </div>
+                </JourneyStepTooltip>
                 <div className="shipment-journey__corridor-line" aria-hidden>
                     <span className="shipment-journey__corridor-track" />
                 </div>
-                <div className="shipment-journey__endpoint shipment-journey__endpoint--dest">
-                    <span className="shipment-journey__endpoint-icon" aria-hidden>
-                        <IconMapPin className="trace-icon shipment-journey__endpoint-pin" />
-                    </span>
-                    <span className="shipment-journey__endpoint-tag">Destino</span>
-                    <span className="shipment-journey__endpoint-coords mono">{to.label}</span>
-                </div>
+                <JourneyStepTooltip id="endpoint-dest" insight={destinationInsight}>
+                    <div className="shipment-journey__endpoint shipment-journey__endpoint--dest">
+                        <span className="shipment-journey__endpoint-icon" aria-hidden>
+                            <IconMapPin className="trace-icon shipment-journey__endpoint-pin" />
+                        </span>
+                        <span className="shipment-journey__endpoint-tag">Destino</span>
+                        <span className="shipment-journey__endpoint-title">
+                            {destinationDisplay.title}
+                        </span>
+                        {destinationDisplay.subtitle ? (
+                            <span className="shipment-journey__endpoint-sub">
+                                {destinationDisplay.subtitle}
+                            </span>
+                        ) : null}
+                    </div>
+                </JourneyStepTooltip>
             </div>
 
             <div className="shipment-journey__rail-wrap">
                 <p className="shipment-journey__rail-caption">
                     Ciclo logístico
                     <span className="shipment-journey__rail-status">
-                        · {statusLabel(status)}
+                        · {journeyRailStatusCaption(status)}
                     </span>
                 </p>
                 <div className="shipment-journey__rail" data-testid="shipment-journey-timeline">
@@ -72,24 +110,35 @@ export function ShipmentJourneyTimeline({
                             ]
                                 .filter(Boolean)
                                 .join(" ");
+                            const insight = buildJourneyStepInsight(
+                                step,
+                                state,
+                                checkpoints,
+                                createdAt,
+                            );
                             return (
                                 <li key={step.id} className={cls}>
-                                    <span
-                                        className={`shipment-journey__marker shipment-journey__marker--${step.icon}`}
-                                        aria-hidden
-                                    >
-                                        <span className="shipment-journey__icon-wrap">
-                                            <JourneyStepIcon
-                                                kind={step.icon}
-                                                className="trace-icon shipment-journey__step-icon"
-                                            />
-                                        </span>
-                                        {eventRecorded && state !== "future" ? (
-                                            <span className="shipment-journey__check" aria-hidden>
-                                                ✓
+                                    <JourneyStepTooltip id={`step-${step.id}`} insight={insight}>
+                                        <span
+                                            className={`shipment-journey__marker shipment-journey__marker--${step.icon}`}
+                                            aria-hidden
+                                        >
+                                            <span className="shipment-journey__icon-wrap">
+                                                <JourneyStepIcon
+                                                    kind={step.icon}
+                                                    className="trace-icon shipment-journey__step-icon"
+                                                />
                                             </span>
-                                        ) : null}
-                                    </span>
+                                            {eventRecorded && state !== "future" ? (
+                                                <span
+                                                    className="shipment-journey__check"
+                                                    aria-hidden
+                                                >
+                                                    ✓
+                                                </span>
+                                            ) : null}
+                                        </span>
+                                    </JourneyStepTooltip>
                                     <span className="shipment-journey__label">{step.label}</span>
                                     {state === "current" ? (
                                         <span className="shipment-journey__here">Ahora</span>
