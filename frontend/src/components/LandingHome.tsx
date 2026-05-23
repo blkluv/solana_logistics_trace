@@ -88,7 +88,7 @@ const SECTORS = [
     },
     {
         title: "Alimentos y cadena de frío",
-        text: "Control de hitos y condiciones para proteger inocuidad, calidad y experiencia del cliente final.",
+        text: "Control de etapas logísticas y condiciones para proteger inocuidad, calidad y experiencia del cliente final.",
     },
     {
         title: "Manufactura y distribución",
@@ -110,7 +110,7 @@ export function LandingHome() {
                         </h1>
                         <p className="landing-hero__lead">
                             Unifique operación, cumplimiento y auditoría en una plataforma diseñada
-                            para equipos de supply chain. Los hitos críticos se registran en{" "}
+                            para equipos de supply chain. Los eventos críticos se registran en{" "}
                             <strong>Solana</strong> y se consultan en tiempo real para decisiones
                             con evidencia verificable.
                         </p>
@@ -248,7 +248,7 @@ export function LandingHome() {
                             <span className="landing-flow__num">3</span>
                             <h3>Consulta y evidencia</h3>
                             <p>
-                                Panel, consulta pública y tx hash para verificar cada hito ante
+                                Panel, consulta pública y tx hash para verificar cada registro ante
                                 socios o compliance.
                             </p>
                         </li>
