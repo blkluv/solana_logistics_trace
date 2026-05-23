@@ -5,11 +5,11 @@ SET status = 'Delivered',
         s.delivered_at,
         (SELECT MAX(c.occurred_at)
          FROM checkpoints c
-         WHERE c.shipment_id = s.id AND c.type = 'Delivered')
+         WHERE c.shipment_id = s.id AND c.checkpoint_type = 'Delivered')
     )
 WHERE s.status NOT IN ('Delivered', 'Cancelled', 'Returned')
   AND EXISTS (
       SELECT 1
       FROM checkpoints c
-      WHERE c.shipment_id = s.id AND c.type = 'Delivered'
+      WHERE c.shipment_id = s.id AND c.checkpoint_type = 'Delivered'
   );
