@@ -2,7 +2,8 @@
 
 import { useCallback, useState } from "react";
 
-import { IncidentTypeIcon, IconCheckCircle } from "@/components/ui/TraceIcons";
+import { IncidentTypeIcon, IconCheckCircle, IconLink } from "@/components/ui/TraceIcons";
+import { canAnchorAutoIncident } from "@/lib/incidents/anchorOnChain";
 import { postResolveIncident, type IncidentItem } from "@/lib/api/incidents";
 import {
     incidentSeverityClass,
@@ -17,6 +18,8 @@ export type ShipmentIncidentCardProps = {
     apiBaseUrl: string;
     wallet: string;
     canResolve: boolean;
+    canAnchorOnChain?: boolean;
+    onAnchorOnChain?: (incident: IncidentItem) => void;
     onResolved?: () => void;
 };
 
@@ -44,12 +47,16 @@ export function ShipmentIncidentCard({
     apiBaseUrl,
     wallet,
     canResolve,
+    canAnchorOnChain = false,
+    onAnchorOnChain,
     onResolved,
 }: ShipmentIncidentCardProps) {
     const [resolving, setResolving] = useState(false);
     const [banner, setBanner] = useState<string | null>(null);
     const isOpen = incident.status === "Open";
     const evidence = evidenceSummary(incident.evidenceJson);
+    const showAnchor =
+        canAnchorOnChain && onAnchorOnChain && canAnchorAutoIncident(incident);
 
     const handleResolve = useCallback(async () => {
         setResolving(true);
@@ -119,17 +126,29 @@ export function ShipmentIncidentCard({
                         {banner}
                     </p>
                 ) : null}
-                {isOpen && canResolve ? (
-                    <button
-                        type="button"
-                        className="btn btn--ghost btn--sm shipment-incident-card__resolve"
-                        disabled={resolving}
-                        onClick={() => void handleResolve()}
-                    >
-                        <IconCheckCircle className="trace-icon trace-icon--inline" />
-                        {resolving ? "Resolviendo…" : "Marcar resuelta"}
-                    </button>
-                ) : null}
+                <div className="shipment-incident-card__actions">
+                    {showAnchor ? (
+                        <button
+                            type="button"
+                            className="btn btn--primary btn--sm"
+                            onClick={() => onAnchorOnChain(incident)}
+                        >
+                            <IconLink className="trace-icon trace-icon--inline" />
+                            Registrar en blockchain
+                        </button>
+                    ) : null}
+                    {isOpen && canResolve ? (
+                        <button
+                            type="button"
+                            className="btn btn--ghost btn--sm shipment-incident-card__resolve"
+                            disabled={resolving}
+                            onClick={() => void handleResolve()}
+                        >
+                            <IconCheckCircle className="trace-icon trace-icon--inline" />
+                            {resolving ? "Resolviendo…" : "Marcar resuelta"}
+                        </button>
+                    ) : null}
+                </div>
             </div>
         </article>
     );

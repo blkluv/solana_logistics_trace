@@ -10,6 +10,7 @@ import { RecordCheckpointForm } from "@/components/admin/RecordCheckpointForm";
 import { ReportCriticalIncidentForm } from "@/components/admin/ReportCriticalIncidentForm";
 import { ShipmentDetailWorkspace } from "@/components/shipments/ShipmentDetailWorkspace";
 import { canReportCriticalIncidentAction } from "@/lib/admin/incidentActions";
+import type { IncidentItem } from "@/lib/api/incidents";
 import { useShipmentDetail } from "@/lib/api/useShipmentDetail";
 import { canRecordCheckpointAction } from "@/lib/admin/shipmentActions";
 import { useAdminState } from "@/lib/admin/useAdminState";
@@ -36,6 +37,7 @@ export default function AdminShipmentDetailPage() {
     );
     const [recordOpen, setRecordOpen] = useState(false);
     const [reportOpen, setReportOpen] = useState(false);
+    const [anchorIncident, setAnchorIncident] = useState<IncidentItem | null>(null);
 
     const shipmentPda = useMemo(() => {
         if (!detail) {
@@ -71,7 +73,13 @@ export default function AdminShipmentDetailPage() {
         await refreshAll();
         await reload();
         setReportOpen(false);
+        setAnchorIncident(null);
     }, [refreshAll, reload]);
+
+    const openReportModal = useCallback((incident: IncidentItem | null) => {
+        setAnchorIncident(incident);
+        setReportOpen(true);
+    }, []);
 
     const backLink = (
         <p className="admin-detail-back mb-0">
@@ -98,7 +106,8 @@ export default function AdminShipmentDetailPage() {
                 className="btn btn--ghost btn--sm"
                 title={reportGate.reason}
                 aria-disabled={!reportGate.enabled}
-                onClick={() => setReportOpen(true)}
+                disabled={!reportGate.enabled}
+                onClick={() => openReportModal(null)}
             >
                 Reportar crítica
             </button>
@@ -136,6 +145,8 @@ export default function AdminShipmentDetailPage() {
                     headerActions={headerActions}
                     showCheckpointTable
                     backLink={backLink}
+                    canAnchorIncidentOnChain={reportGate.enabled}
+                    onAnchorIncidentOnChain={(inc) => openReportModal(inc)}
                 />
             ) : null}
 
@@ -184,7 +195,10 @@ export default function AdminShipmentDetailPage() {
             <AdminModal
                 open={reportOpen}
                 title="Incidencia crítica on-chain"
-                onClose={() => setReportOpen(false)}
+                onClose={() => {
+                    setReportOpen(false);
+                    setAnchorIncident(null);
+                }}
                 size="lg"
             >
                 {!reportGate.enabled ? (
@@ -199,6 +213,7 @@ export default function AdminShipmentDetailPage() {
                         shipmentPda={shipmentPda}
                         shipmentServiceId={detail.shipmentId}
                         apiBaseUrl={cfg.apiBaseUrl}
+                        anchorIncident={anchorIncident}
                         onSuccess={() => void onReportSuccess()}
                     />
                 ) : (
