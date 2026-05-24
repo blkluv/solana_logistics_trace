@@ -80,7 +80,12 @@ export function resolveOperationalJourneyStepId(
     status: string,
     checkpoints: readonly CheckpointItem[],
 ): string {
-    if (status !== "Created" && status !== "Cancelled" && status !== "Returned") {
+    const usesCheckpointFallback =
+        status === "Created" ||
+        status === "Cancelled" ||
+        status === "Returned" ||
+        status === "Lost";
+    if (!usesCheckpointFallback) {
         return statusToJourneyStepId(status);
     }
     return resolveNowStepId(checkpoints, "");
@@ -100,6 +105,7 @@ function statusToStepIndex(status: string): number {
             return 5;
         case "Returned":
         case "Cancelled":
+        case "Lost":
             return -1;
         default:
             return 0;
@@ -236,7 +242,8 @@ export function resolveJourneyStepStates(
 ): ResolvedJourneyStep[] {
     const recorded = new Set(checkpointTypes);
     const currentIdx = statusToStepIndex(status);
-    const isException = status === "Cancelled" || status === "Returned";
+    const isException =
+        status === "Cancelled" || status === "Returned" || status === "Lost";
 
     return JOURNEY_EVENT_STEPS.map((step, index) => {
         const eventRecorded =
