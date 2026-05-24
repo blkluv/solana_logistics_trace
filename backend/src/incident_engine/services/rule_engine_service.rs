@@ -2,10 +2,11 @@
 
 use sqlx::PgPool;
 
-use crate::incident_engine::models::TelemetryEvent;
+use crate::incident_engine::models::{IncidentDetectionResult, TelemetryEvent};
 use crate::incident_engine::processors::IncidentProcessor;
+use crate::incident_engine::repositories::{incidents, rules as rule_config};
 use crate::incident_engine::rules::{all_rules, evaluate_offline};
-use crate::incident_engine::repositories::incidents;
+use crate::incident_engine::severity;
 
 pub struct RuleEngineService;
 
@@ -19,8 +20,10 @@ impl RuleEngineService {
             return Ok(());
         };
 
+        let severities = rule_config::active_severities_by_rule(pool).await?;
         for rule in all_rules() {
             if let Some(detection) = rule.evaluate_telemetry(&telemetry, &shipment).await {
+                let detection = apply_rule_severity(detection, &severities);
                 IncidentProcessor::apply_detection(pool, shipment.shipment_id, detection).await?;
             }
         }
@@ -35,18 +38,29 @@ impl RuleEngineService {
             return Ok(());
         };
 
+        let severities = rule_config::active_severities_by_rule(pool).await?;
         for rule in all_rules() {
             if let Some(detection) = rule.evaluate_shipment(&shipment).await {
+                let detection = apply_rule_severity(detection, &severities);
                 IncidentProcessor::apply_detection(pool, shipment.shipment_id, detection).await?;
             }
         }
 
         if let Some(detection) = evaluate_offline(pool, &shipment).await {
+            let detection = apply_rule_severity(detection, &severities);
             IncidentProcessor::apply_detection(pool, shipment.shipment_id, detection).await?;
         }
 
         Ok(())
     }
+}
+
+fn apply_rule_severity(
+    mut detection: IncidentDetectionResult,
+    severities: &std::collections::HashMap<String, String>,
+) -> IncidentDetectionResult {
+    detection.severity = severity::resolve_for_rule(severities, &detection.rule_name);
+    detection
 }
 
 #[cfg(test)]
