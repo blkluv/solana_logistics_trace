@@ -51,6 +51,8 @@ cargo run
 
 Migraciones automáticas al iniciar. API: `http://localhost:8000/api/v1`.
 
+Cada archivo en `migrations/` debe tener un **prefijo de versión único** (`YYYYMMDDHHMMSS`). Si sqlx indica *«migration X was previously applied but has been modified»*, suele haber dos scripts con el mismo prefijo o el archivo cambió tras aplicarse; no edites migraciones ya aplicadas — crea una nueva con otro timestamp.
+
 ---
 
 ## Endpoints principales
