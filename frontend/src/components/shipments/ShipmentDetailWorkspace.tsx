@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import { IncidentHubNavLink } from "@/components/incidents/IncidentHubNavLink";
@@ -14,6 +14,7 @@ import { useShipmentIncidents } from "@/lib/api/useShipmentIncidents";
 import { useShipmentTelemetry } from "@/lib/api/useShipmentTelemetry";
 import type { IncidentItem } from "@/lib/api/incidents";
 import type { ShipmentDetail } from "@/lib/api/shipments";
+import { pickIncidentForAutoAnchorModal } from "@/lib/incidents/criticalIncidentFlow";
 import { canResolveIncident } from "@/lib/panel/capabilities";
 import { buildMonitoringGlance } from "@/lib/telemetry/monitoringGlance";
 
@@ -71,12 +72,32 @@ export function ShipmentDetailWorkspace({
     };
 
     const openIncidents = items.filter((i) => i.status === "Open");
+    const autoAnchorPromptedRef = useRef(new Set<string>());
+
+    useEffect(() => {
+        autoAnchorPromptedRef.current.clear();
+    }, [detail.shipmentId]);
+
+    useEffect(() => {
+        if (!canAnchorIncidentOnChain || !onAnchorIncidentOnChain || loading) {
+            return;
+        }
+        const pick = pickIncidentForAutoAnchorModal(items, autoAnchorPromptedRef.current);
+        if (!pick) {
+            return;
+        }
+        autoAnchorPromptedRef.current.add(pick.id);
+        onAnchorIncidentOnChain(pick);
+    }, [items, loading, canAnchorIncidentOnChain, onAnchorIncidentOnChain]);
+
+    const traceabilityCount = detail.checkpoints.length + items.length;
 
     return (
         <div className="shipment-detail-pro">
             <ShipmentDetailHero
                 detail={detail}
                 openIncidentCount={openCount}
+                incidents={items}
                 apiBaseUrl={apiBaseUrl}
                 headerActions={headerActions}
                 backLink={backLink}
@@ -92,7 +113,7 @@ export function ShipmentDetailWorkspace({
                         >
                             Trazabilidad
                             <span className="shipment-detail-pro__tab-count">
-                                {detail.checkpoints.length}
+                                {traceabilityCount}
                             </span>
                         </button>
                         <button
@@ -114,7 +135,10 @@ export function ShipmentDetailWorkspace({
                     <div className="shipment-detail-pro__panel">
                         {tab === "timeline" ? (
                             <>
-                                <ShipmentTimelineTrack checkpoints={detail.checkpoints} />
+                                <ShipmentTimelineTrack
+                                    checkpoints={detail.checkpoints}
+                                    incidents={items}
+                                />
                                 {showCheckpointTable ? (
                                     <div className="shipment-detail-pro__table-toggle">
                                         <button

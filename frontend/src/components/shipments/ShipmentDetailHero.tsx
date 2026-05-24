@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { ShipmentCreationTxHash } from "@/components/shipments/ShipmentCreationTxHash";
 import { ShipmentJourneyTimeline } from "@/components/shipments/ShipmentJourneyTimeline";
 import { IconPackage, IconThermometer } from "@/components/ui/TraceIcons";
+import type { IncidentItem } from "@/lib/api/incidents";
 import type { ShipmentDetail } from "@/lib/api/shipments";
 import { ShipmentOperationalDetails } from "@/components/shipments/ShipmentOperationalDetails";
 import { statusBadgeClass, statusLabel } from "@/lib/shipments/display";
@@ -11,6 +12,7 @@ import { formatParticipantLine, formatParticipantSub } from "@/lib/wallet/displa
 export type ShipmentDetailHeroProps = {
     detail: ShipmentDetail;
     openIncidentCount: number;
+    incidents?: readonly IncidentItem[];
     apiBaseUrl?: string;
     headerActions?: ReactNode;
     backLink?: ReactNode;
@@ -38,6 +40,7 @@ function formatDateOnly(iso: string): string {
 export function ShipmentDetailHero({
     detail,
     openIncidentCount,
+    incidents = [],
     apiBaseUrl,
     headerActions,
     backLink,
@@ -93,6 +96,7 @@ export function ShipmentDetailHero({
                     checkpoints={detail.checkpoints}
                     createdAt={detail.createdAt}
                     apiBaseUrl={apiBaseUrl}
+                    incidents={incidents}
                 />
 
                 <dl className="shipment-hero__metrics">

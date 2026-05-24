@@ -23,6 +23,8 @@ export function mapAutoIncidentToOnChainType(incidentType: string): CriticalInci
             return CriticalIncidentTypeCode.Other;
         case "SENSOR_OFFLINE":
             return CriticalIncidentTypeCode.Other;
+        case "SHIPMENT_LOST":
+            return CriticalIncidentTypeCode.Lost;
         default:
             return CriticalIncidentTypeCode.Other;
     }

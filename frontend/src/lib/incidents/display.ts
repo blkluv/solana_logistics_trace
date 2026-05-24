@@ -51,6 +51,7 @@ export function incidentTypeLabel(code: string): string {
         ROUTE_DEVIATION: "Desviación de ruta",
         SENSOR_OFFLINE: "Sensor sin datos",
         HUMIDITY_OUT_OF_RANGE: "Humedad fuera de rango",
+        SHIPMENT_LOST: "Pérdida de envío",
         CRITICAL_MANUAL: "Incidencia crítica",
         TempViolation: "Violación de temperatura",
         Damage: "Daño",
