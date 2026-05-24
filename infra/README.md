@@ -1,27 +1,63 @@
-# Infraestructura local
+# Infraestructura — TraceSol Logistics
+
+Servicios de apoyo para desarrollo local. En esta fase el componente principal es **PostgreSQL**, usado por el backend Rocket.
+
+Documentación general: [README principal](../README.md).
+
+---
+
+## Requisitos
+
+- Docker Engine 20.10+
+- Docker Compose V2
+
+---
 
 ## PostgreSQL
 
-Servicio definido en `docker-compose.yml` (usuario, contraseña y base alineados con `.env.example` del repo).
+| Parámetro | Valor por defecto |
+|-----------|-------------------|
+| Base de datos | `logistics_trace` |
+| Usuario | `logistics_user` |
+| Contraseña | `logistics_pass` |
+| Puerto | `5432` |
+
+### Arranque (desde la raíz del repo)
 
 ```bash
-# Desde la raíz de logistics_trace:
 docker compose -f infra/docker-compose.yml up -d
 docker compose -f infra/docker-compose.yml ps
 ```
 
-Para parar y conservar datos:
+### Parada
 
 ```bash
 docker compose -f infra/docker-compose.yml stop
 ```
 
-## Variables de entorno
+Volumen persistente: `postgres_data`. Eliminar datos: `docker compose -f infra/docker-compose.yml down -v`.
 
-| Ubicación | Uso |
-|-----------|-----|
-| `backend/.env.example` | Plantilla para ejecutar Rocket desde `backend/` |
-| `frontend/.env.example` | Plantilla para Next (`cp` → `.env.local`) |
-| `../.env.example` | Vista completa monorepo |
+---
 
-El frontend debe usar `NEXT_PUBLIC_API_BASE_URL` apuntando al API con sufijo **`/api/v1`** (p. ej. `http://localhost:8000/api/v1`).
+## Conexión con el backend
+
+```env
+DATABASE_URL=postgres://logistics_user:logistics_pass@localhost:5432/logistics_trace
+```
+
+Ver [`.env.example`](../.env.example) y [backend/README.md](../backend/README.md).
+
+---
+
+## Orden de arranque
+
+1. **Infra** (este módulo)
+2. [Programa Solana](../programs/logistics_traceability/README.md)
+3. [Backend](../backend/README.md)
+4. [Frontend](../frontend/README.md)
+
+---
+
+## Rama Git
+
+Rama `infra` → merge a `main`.
