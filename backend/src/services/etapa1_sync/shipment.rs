@@ -4,8 +4,8 @@ use chrono::{TimeZone, Utc};
 use sqlx::PgPool;
 
 use super::{
-    first_matching_account, pubkey_bs58, validate_signature_base58, ShipmentSyncRequestBody,
-    ShipmentSyncResponse, SyncOutcome,
+    first_matching_account, optional_carrier_wallet, pubkey_bs58, validate_signature_base58,
+    ShipmentSyncRequestBody, ShipmentSyncResponse, SyncOutcome,
 };
 use crate::dto::shipment_details::{
     merge_shipment_details, normalize_shipment_sync_details, shipment_details_from_account,
@@ -78,11 +78,14 @@ pub async fn sync_shipment(
     let chain_details = shipment_details_from_account(&shipment);
     let details = merge_shipment_details(chain_details, body_details);
 
+    let carrier_wallet = optional_carrier_wallet(&shipment.carrier);
+
     let row = shipments::insert_shipment_returning_id(
         pool,
         on_chain_id_i64,
         &pubkey_bs58(&shipment.sender),
         &pubkey_bs58(&shipment.recipient),
+        carrier_wallet.as_deref(),
         &shipment.product,
         &shipment.origin,
         &shipment.destination,

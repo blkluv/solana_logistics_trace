@@ -145,6 +145,20 @@ pub async fn select_summaries_for_wallets(
         .collect())
 }
 
+/// Active Carrier actors for sender assignment picker.
+pub async fn list_active_carriers(
+    pool: &PgPool,
+) -> Result<Vec<(String, String)>, sqlx::Error> {
+    sqlx::query_as(
+        r#"SELECT wallet, name
+           FROM actors
+           WHERE role = 'Carrier' AND is_active = true
+           ORDER BY name ASC, wallet ASC"#,
+    )
+    .fetch_all(pool)
+    .await
+}
+
 /// Actores con rol Recipient activos, para selector de destinatario al crear envíos.
 pub async fn list_active_recipients(
     pool: &PgPool,

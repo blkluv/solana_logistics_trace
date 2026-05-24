@@ -1,11 +1,13 @@
 //! Etapa 1 sync HTTP handlers (thin).
 
 mod actor;
+mod assign_carrier;
 mod checkpoint;
 mod incident;
 mod shipment;
 
 pub use actor::post_sync_actor;
+pub use assign_carrier::post_sync_assign_carrier;
 pub use checkpoint::post_sync_checkpoint;
 pub use incident::post_sync_incident;
 pub use shipment::post_sync_shipment;

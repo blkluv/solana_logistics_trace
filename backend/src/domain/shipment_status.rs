@@ -6,6 +6,12 @@ fn is_terminal(status: &str) -> bool {
     TERMINAL.contains(&status)
 }
 
+/// Whether new logistics events (checkpoints) must be rejected.
+#[must_use]
+pub fn blocks_new_checkpoints(status: &str) -> bool {
+    is_terminal(status)
+}
+
 #[must_use]
 pub fn next_status_after_checkpoint(current_status: &str, checkpoint_type: &str) -> Option<&'static str> {
     if is_terminal(current_status) {
