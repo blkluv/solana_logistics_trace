@@ -68,8 +68,10 @@ pub struct ShipmentDetailJson {
     pub destination: String,
     pub sender: String,
     pub recipient: String,
+    pub carrier: Option<String>,
     pub sender_participant: WalletParticipantJson,
     pub recipient_participant: WalletParticipantJson,
+    pub carrier_participant: Option<WalletParticipantJson>,
     pub status: String,
     pub requires_cold_chain: bool,
     pub created_at: DateTime<Utc>,
@@ -180,8 +182,12 @@ pub fn shipment_detail_json_from_row(
         destination: row.destination,
         sender: row.sender_wallet.clone(),
         recipient: row.recipient_wallet.clone(),
+        carrier: row.carrier_wallet.clone(),
         sender_participant: wallet_participant_from_wallet(&row.sender_wallet, actors),
         recipient_participant: wallet_participant_from_wallet(&row.recipient_wallet, actors),
+        carrier_participant: row.carrier_wallet.as_ref().map(|w| {
+            wallet_participant_from_wallet(w, actors)
+        }),
         status: row.status,
         requires_cold_chain: row.requires_cold_chain,
         created_at: row.created_at,

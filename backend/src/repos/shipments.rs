@@ -3,7 +3,7 @@ use sqlx::postgres::PgRow;
 use sqlx::{Error as SqlxError, FromRow, PgPool, Row};
 use uuid::Uuid;
 
-use crate::access::operational_roles_see_all_shipments;
+use crate::access::{is_carrier_role, operational_roles_see_all_shipments};
 use crate::dto::shipment_details::{ShipmentDetailsPersist, ShipmentDetailsRow, PRIORITY_NORMAL};
 use crate::repos::actors;
 
@@ -38,6 +38,7 @@ pub struct ShipmentDetailRow {
     pub on_chain_shipment_id: i64,
     pub sender_wallet: String,
     pub recipient_wallet: String,
+    pub carrier_wallet: Option<String>,
     pub product: String,
     pub origin: String,
     pub destination: String,
@@ -51,8 +52,8 @@ pub struct ShipmentDetailRow {
     pub details: ShipmentDetailsRow,
 }
 
-const SHIPMENT_DETAIL_SELECT: &str = r#"SELECT id, on_chain_shipment_id, sender_wallet, recipient_wallet, product, origin,
-                  destination, status, requires_cold_chain, checkpoint_count, incident_count,
+const SHIPMENT_DETAIL_SELECT: &str = r#"SELECT id, on_chain_shipment_id, sender_wallet, recipient_wallet, carrier_wallet,
+                  product, origin, destination, status, requires_cold_chain, checkpoint_count, incident_count,
                   created_at, delivered_at, creation_tx_hash,
                   weight_kg, quantity, quantity_unit, estimated_delivery_at, reference_code, priority, notes"#;
 
@@ -63,6 +64,7 @@ impl<'r> FromRow<'r, PgRow> for ShipmentDetailRow {
             on_chain_shipment_id: row.try_get("on_chain_shipment_id")?,
             sender_wallet: row.try_get("sender_wallet")?,
             recipient_wallet: row.try_get("recipient_wallet")?,
+            carrier_wallet: row.try_get("carrier_wallet")?,
             product: row.try_get("product")?,
             origin: row.try_get("origin")?,
             destination: row.try_get("destination")?,
@@ -93,6 +95,21 @@ pub async fn list_shipments_as_participant(
     .await
 }
 
+pub async fn list_shipments_as_carrier(
+    pool: &PgPool,
+    wallet: &str,
+) -> Result<Vec<ShipmentListRow>, sqlx::Error> {
+    sqlx::query_as::<_, ShipmentListRow>(
+        r#"SELECT id, on_chain_shipment_id, status, product, created_at, requires_cold_chain
+           FROM shipments
+           WHERE carrier_wallet = $1
+           ORDER BY created_at DESC"#,
+    )
+    .bind(wallet)
+    .fetch_all(pool)
+    .await
+}
+
 pub async fn list_all_shipments(pool: &PgPool) -> Result<Vec<ShipmentListRow>, sqlx::Error> {
     sqlx::query_as::<_, ShipmentListRow>(
         r#"SELECT id, on_chain_shipment_id, status, product, created_at, requires_cold_chain
@@ -108,13 +125,10 @@ pub async fn list_shipments_for_wallet(
     wallet: &str,
 ) -> Result<Vec<ShipmentListRow>, sqlx::Error> {
     let role = actors::select_role_for_wallet(pool, wallet).await?;
-    if role
-        .as_deref()
-        .is_some_and(operational_roles_see_all_shipments)
-    {
-        list_all_shipments(pool).await
-    } else {
-        list_shipments_as_participant(pool, wallet).await
+    match role.as_deref() {
+        Some(r) if operational_roles_see_all_shipments(r) => list_all_shipments(pool).await,
+        Some(r) if is_carrier_role(r) => list_shipments_as_carrier(pool, wallet).await,
+        _ => list_shipments_as_participant(pool, wallet).await,
     }
 }
 
@@ -136,7 +150,23 @@ pub async fn select_shipment_detail_for_participant(
     wallet: &str,
 ) -> Result<Option<ShipmentDetailRow>, sqlx::Error> {
     sqlx::query_as::<_, ShipmentDetailRow>(
-        &format!("{SHIPMENT_DETAIL_SELECT} FROM shipments WHERE id = $1 AND (sender_wallet = $2 OR recipient_wallet = $2)"),
+        &format!(
+            "{SHIPMENT_DETAIL_SELECT} FROM shipments WHERE id = $1 AND (sender_wallet = $2 OR recipient_wallet = $2)"
+        ),
+    )
+    .bind(shipment_id)
+    .bind(wallet)
+    .fetch_optional(pool)
+    .await
+}
+
+pub async fn select_shipment_detail_for_carrier(
+    pool: &PgPool,
+    shipment_id: Uuid,
+    wallet: &str,
+) -> Result<Option<ShipmentDetailRow>, sqlx::Error> {
+    sqlx::query_as::<_, ShipmentDetailRow>(
+        &format!("{SHIPMENT_DETAIL_SELECT} FROM shipments WHERE id = $1 AND carrier_wallet = $2"),
     )
     .bind(shipment_id)
     .bind(wallet)
@@ -150,14 +180,38 @@ pub async fn select_shipment_detail_for_wallet(
     wallet: &str,
 ) -> Result<Option<ShipmentDetailRow>, sqlx::Error> {
     let role = actors::select_role_for_wallet(pool, wallet).await?;
-    if role
-        .as_deref()
-        .is_some_and(operational_roles_see_all_shipments)
-    {
-        select_shipment_detail_by_id(pool, shipment_id).await
-    } else {
-        select_shipment_detail_for_participant(pool, shipment_id, wallet).await
+    match role.as_deref() {
+        Some(r) if operational_roles_see_all_shipments(r) => {
+            select_shipment_detail_by_id(pool, shipment_id).await
+        }
+        Some(r) if is_carrier_role(r) => {
+            select_shipment_detail_for_carrier(pool, shipment_id, wallet).await
+        }
+        _ => select_shipment_detail_for_participant(pool, shipment_id, wallet).await,
     }
+}
+
+pub async fn select_status_by_id(
+    pool: &PgPool,
+    shipment_id: Uuid,
+) -> Result<String, sqlx::Error> {
+    sqlx::query_scalar(r#"SELECT status FROM shipments WHERE id = $1"#)
+        .bind(shipment_id)
+        .fetch_one(pool)
+        .await
+}
+
+pub async fn update_carrier_wallet(
+    pool: &PgPool,
+    shipment_id: Uuid,
+    carrier_wallet: &str,
+) -> Result<(), sqlx::Error> {
+    sqlx::query(r#"UPDATE shipments SET carrier_wallet = $2 WHERE id = $1"#)
+        .bind(shipment_id)
+        .bind(carrier_wallet)
+        .execute(pool)
+        .await?;
+    Ok(())
 }
 
 pub async fn id_by_on_chain_shipment_id(
@@ -213,6 +267,7 @@ pub async fn insert_shipment_returning_id(
     on_chain_shipment_id: i64,
     sender_wallet: &str,
     recipient_wallet: &str,
+    carrier_wallet: Option<&str>,
     product: &str,
     origin: &str,
     destination: &str,
@@ -258,16 +313,17 @@ pub async fn insert_shipment_returning_id(
 
     let id: Uuid = sqlx::query_scalar(
         r#"INSERT INTO shipments (
-               on_chain_shipment_id, sender_wallet, recipient_wallet, product, origin, destination,
+               on_chain_shipment_id, sender_wallet, recipient_wallet, carrier_wallet, product, origin, destination,
                status, requires_cold_chain, checkpoint_count, incident_count, created_at, delivered_at,
                creation_tx_hash, weight_kg, quantity, quantity_unit, estimated_delivery_at,
                reference_code, priority, notes
-           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
            RETURNING id"#,
     )
     .bind(on_chain_shipment_id)
     .bind(sender_wallet)
     .bind(recipient_wallet)
+    .bind(carrier_wallet)
     .bind(product)
     .bind(origin)
     .bind(destination)

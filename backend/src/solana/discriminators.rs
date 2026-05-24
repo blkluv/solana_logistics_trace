@@ -34,6 +34,11 @@ pub fn record_checkpoint_ix() -> [u8; 8] {
 }
 
 #[must_use]
+pub fn assign_carrier_ix() -> [u8; 8] {
+    anchor_global_ix("assign_carrier")
+}
+
+#[must_use]
 pub fn report_critical_incident_ix() -> [u8; 8] {
     anchor_global_ix("report_critical_incident")
 }
