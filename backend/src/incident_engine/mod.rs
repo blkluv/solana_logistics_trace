@@ -6,6 +6,7 @@ pub mod models;
 pub mod processors;
 pub mod repositories;
 pub mod rules;
+pub mod severity;
 pub mod services;
 pub mod simulators;
 
