@@ -40,7 +40,8 @@ pub fn process_assign_carrier(ctx: Context<AssignCarrier>) -> Result<()> {
     );
     require!(
         shipment.status != ShipmentStatus::Delivered
-            && shipment.status != ShipmentStatus::Cancelled,
+            && shipment.status != ShipmentStatus::Cancelled
+            && shipment.status != ShipmentStatus::Lost,
         ErrorCode::ShipmentAlreadyClosed
     );
 

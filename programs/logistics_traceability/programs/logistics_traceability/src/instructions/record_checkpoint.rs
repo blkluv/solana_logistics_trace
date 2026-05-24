@@ -52,7 +52,8 @@ pub fn process_record_checkpoint(
     let shipment = &ctx.accounts.shipment;
     require!(
         shipment.status != ShipmentStatus::Delivered
-            && shipment.status != ShipmentStatus::Cancelled,
+            && shipment.status != ShipmentStatus::Cancelled
+            && shipment.status != ShipmentStatus::Lost,
         ErrorCode::ShipmentAlreadyClosed
     );
     if ctx.accounts.actor.role == ActorRole::Carrier {
