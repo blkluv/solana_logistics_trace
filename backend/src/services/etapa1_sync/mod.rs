@@ -25,6 +25,25 @@ pub struct SyncRequestBody {
     pub commitment: Option<String>,
 }
 
+/// `POST /incidents/sync` — opcionalmente ancla una incidencia `auto` existente.
+#[derive(Debug, Deserialize)]
+pub struct IncidentSyncRequestBody {
+    pub tx_hash: String,
+    #[serde(default)]
+    pub commitment: Option<String>,
+    #[serde(default)]
+    pub anchor_incident_id: Option<uuid::Uuid>,
+}
+
+impl IncidentSyncRequestBody {
+    pub(super) fn commitment(&self) -> String {
+        self.commitment
+            .clone()
+            .filter(|c| !c.is_empty())
+            .unwrap_or_else(|| "confirmed".to_string())
+    }
+}
+
 /// Cuerpo de `POST /shipments/sync`: transacción on-chain + detalles opcionales off-chain.
 #[derive(Debug, Deserialize)]
 pub struct ShipmentSyncRequestBody {

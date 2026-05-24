@@ -8,7 +8,7 @@ use sqlx::PgPool;
 
 use super::map_sync_error;
 use crate::config::AppConfig;
-use crate::services::etapa1_sync::{sync_incident, SyncRequestBody};
+use crate::services::etapa1_sync::{sync_incident, IncidentSyncRequestBody};
 use crate::solana::SolanaRpcClient;
 
 #[rocket::post("/incidents/sync", format = "json", data = "<body>")]
@@ -16,7 +16,7 @@ pub async fn post_sync_incident(
     pool: &State<PgPool>,
     rpc: &State<Arc<dyn SolanaRpcClient>>,
     cfg: &State<AppConfig>,
-    body: Json<SyncRequestBody>,
+    body: Json<IncidentSyncRequestBody>,
 ) -> Result<(Status, Json<serde_json::Value>), (Status, Json<serde_json::Value>)> {
     if cfg.program_id.is_empty() {
         return Err((

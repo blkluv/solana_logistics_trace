@@ -3,7 +3,7 @@ use std::sync::Arc;
 use sqlx::PgPool;
 
 use super::{
-    validate_signature_base58, IncidentSyncResponse, SyncOutcome, SyncRequestBody,
+    validate_signature_base58, IncidentSyncRequestBody, IncidentSyncResponse, SyncOutcome,
 };
 use crate::incident_engine::repositories::incidents;
 use crate::repos::shipments;
@@ -19,7 +19,7 @@ pub async fn sync_incident(
     pool: &PgPool,
     rpc: &Arc<dyn SolanaRpcClient>,
     program_id: &str,
-    body: &SyncRequestBody,
+    body: &IncidentSyncRequestBody,
 ) -> Result<SyncOutcome<IncidentSyncResponse>, SolanaSyncError> {
     validate_signature_base58(&body.tx_hash)?;
     let commitment = body.commitment();
@@ -87,18 +87,34 @@ pub async fn sync_incident(
     let incident_type = critical_incident_type_code(args.incident_type);
     let severity = on_chain_severity_code(args.severity);
 
-    let incident_id = incidents::insert_on_chain(
-        pool,
-        shipment_uuid,
-        incident_type,
-        severity,
-        &args.description,
-        &evidence_hash_hex,
-        reporter_pk,
-        &body.tx_hash,
-    )
-    .await
-    .map_err(|e| SolanaSyncError::Validation(e.to_string()))?;
+    let incident_id = if let Some(anchor_id) = body.anchor_incident_id {
+        incidents::anchor_auto_to_on_chain(
+            pool,
+            anchor_id,
+            shipment_uuid,
+            incident_type,
+            severity,
+            &args.description,
+            &evidence_hash_hex,
+            reporter_pk,
+            &body.tx_hash,
+        )
+        .await
+        .map_err(|e| SolanaSyncError::Validation(e.to_string()))?
+    } else {
+        incidents::insert_on_chain(
+            pool,
+            shipment_uuid,
+            incident_type,
+            severity,
+            &args.description,
+            &evidence_hash_hex,
+            reporter_pk,
+            &body.tx_hash,
+        )
+        .await
+        .map_err(|e| SolanaSyncError::Validation(e.to_string()))?
+    };
 
     let incident_count_i32: i32 = shipment.incident_count.try_into().map_err(|_| {
         SolanaSyncError::Validation("incident_count overflow".into())

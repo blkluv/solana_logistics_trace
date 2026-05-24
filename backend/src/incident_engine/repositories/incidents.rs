@@ -130,6 +130,51 @@ pub async fn id_by_tx_hash(pool: &PgPool, tx_hash: &str) -> Result<Option<Uuid>,
         .await
 }
 
+/// Vincula una incidencia `auto` abierta con la transacción on-chain firmada.
+pub async fn anchor_auto_to_on_chain(
+    pool: &PgPool,
+    incident_id: Uuid,
+    shipment_id: Uuid,
+    incident_type: &str,
+    severity: &str,
+    description: &str,
+    evidence_hash_hex: &str,
+    created_by_wallet: &str,
+    tx_hash: &str,
+) -> Result<Uuid, String> {
+    let updated = sqlx::query_scalar::<_, Uuid>(
+        r#"UPDATE incidents SET
+               source = 'on_chain',
+               incident_type = $3,
+               severity = $4,
+               description = $5,
+               evidence_hash = $6,
+               created_by_wallet = $7,
+               tx_hash = $8
+           WHERE id = $1
+             AND shipment_id = $2
+             AND source = 'auto'
+             AND status = 'Open'
+             AND tx_hash IS NULL
+           RETURNING id"#,
+    )
+    .bind(incident_id)
+    .bind(shipment_id)
+    .bind(incident_type)
+    .bind(severity)
+    .bind(description)
+    .bind(evidence_hash_hex)
+    .bind(created_by_wallet)
+    .bind(tx_hash)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| e.to_string())?;
+
+    updated.ok_or_else(|| {
+        "incident not found or not eligible to anchor (must be open auto without tx)".into()
+    })
+}
+
 pub async fn insert_on_chain(
     pool: &PgPool,
     shipment_id: Uuid,
