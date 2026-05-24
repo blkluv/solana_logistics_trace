@@ -91,9 +91,14 @@ export async function postCheckpointsSync(
     return { ok: res.ok, status: res.status, json };
 }
 
+export type IncidentSyncRequestBody = SyncRequestBodySnake & {
+    /** UUID de incidencia `auto` abierta a vincular con la tx on-chain. */
+    anchor_incident_id?: string;
+};
+
 export async function postIncidentsSync(
     apiBaseUrl: string,
-    body: SyncRequestBodySnake,
+    body: IncidentSyncRequestBody,
 ): Promise<SyncCallResult> {
     const url = joinBase(apiBaseUrl, "incidents/sync");
     const res = await fetch(url, {

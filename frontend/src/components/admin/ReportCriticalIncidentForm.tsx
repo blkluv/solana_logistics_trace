@@ -1,17 +1,20 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Connection, PublicKey } from "@solana/web3.js";
 
+import type { IncidentItem } from "@/lib/api/incidents";
 import { apiBaseHasV1Prefix, normalizeApiBaseUrl } from "@/lib/api/backendConnectivity";
 import { postIncidentsSync } from "@/lib/api/sync";
-import { evidenceHashToHex, sha256EvidenceJson } from "@/lib/incidents/evidenceHash";
-import { incidentTypeLabel } from "@/lib/incidents/display";
+import { postSyncWithRetry } from "@/lib/api/syncWithRetry";
+import { sha256EvidenceJson } from "@/lib/incidents/evidenceHash";
 import {
-    syncSuccessCopy,
-    userFacingChainError,
-    userMessageForSyncFailure,
-} from "@/lib/panel/etapa1UserMessages";
+    buildAnchorEvidencePayload,
+    mapAutoIncidentToOnChainType,
+    onChainSeverityFromAuto,
+} from "@/lib/incidents/anchorOnChain";
+import { incidentTypeLabel } from "@/lib/incidents/display";
+import { userFacingChainError, userMessageForSyncFailure } from "@/lib/panel/etapa1UserMessages";
 import { confirmSerializedTx } from "@/lib/solana/confirmSerializedTx";
 import { createReportCriticalIncidentIx } from "@/lib/solana/instructions";
 import {
@@ -28,6 +31,10 @@ const INCIDENT_TYPE_OPTIONS: { code: CriticalIncidentTypeCode; key: string }[] =
     { key: "Other", code: CriticalIncidentTypeCode.Other },
 ];
 
+function typeKeyFromCode(code: CriticalIncidentTypeCode): string {
+    return INCIDENT_TYPE_OPTIONS.find((o) => o.code === code)?.key ?? "Other";
+}
+
 export type ReportCriticalIncidentFormProps = {
     connection: Connection;
     programId: PublicKey;
@@ -35,6 +42,8 @@ export type ReportCriticalIncidentFormProps = {
     shipmentPda: PublicKey;
     shipmentServiceId: string;
     apiBaseUrl: string;
+    /** Incidencia automática del motor a anclar on-chain (opcional). */
+    anchorIncident?: IncidentItem | null;
     onSuccess: () => void;
 };
 
@@ -45,6 +54,7 @@ export function ReportCriticalIncidentForm({
     shipmentPda,
     shipmentServiceId,
     apiBaseUrl,
+    anchorIncident = null,
     onSuccess,
 }: ReportCriticalIncidentFormProps) {
     const [typeKey, setTypeKey] = useState("TempViolation");
@@ -55,6 +65,16 @@ export function ReportCriticalIncidentForm({
 
     const apiBaseTrimmed = normalizeApiBaseUrl(apiBaseUrl ?? "");
     const apiOk = apiBaseTrimmed !== "" && apiBaseHasV1Prefix(apiBaseTrimmed);
+
+    useEffect(() => {
+        if (!anchorIncident) {
+            return;
+        }
+        const mapped = mapAutoIncidentToOnChainType(anchorIncident.incidentType);
+        setTypeKey(typeKeyFromCode(mapped));
+        setSeverity(onChainSeverityFromAuto(anchorIncident.severity));
+        setDescription(anchorIncident.description.slice(0, 256));
+    }, [anchorIncident]);
 
     const onSubmit = useCallback(async () => {
         const desc = description.trim();
@@ -71,13 +91,22 @@ export function ReportCriticalIncidentForm({
         setBusy(true);
         setBanner(null);
         try {
-            const evidence = {
-                shipmentId: shipmentServiceId,
-                incidentType: typeOpt.key,
-                severity,
-                description: desc,
-                reportedAt: new Date().toISOString(),
-            };
+            const severityLabel = severity;
+            const evidence = anchorIncident
+                ? buildAnchorEvidencePayload(
+                      shipmentServiceId,
+                      anchorIncident,
+                      typeOpt.key,
+                      severityLabel,
+                      desc,
+                  )
+                : {
+                      shipmentId: shipmentServiceId,
+                      incidentType: typeOpt.key,
+                      severity: severityLabel,
+                      description: desc,
+                      reportedAt: new Date().toISOString(),
+                  };
             const hashBytes = await sha256EvidenceJson(evidence);
             const severityCode =
                 severity === "Critical"
@@ -96,23 +125,31 @@ export function ReportCriticalIncidentForm({
             const sig = await confirmSerializedTx(connection, payer, ix);
 
             if (apiOk) {
-                const r = await postIncidentsSync(apiBaseTrimmed, { tx_hash: sig });
+                const syncBody = {
+                    tx_hash: sig,
+                    ...(anchorIncident ? { anchor_incident_id: anchorIncident.id } : {}),
+                };
+                const r = await postSyncWithRetry(() =>
+                    postIncidentsSync(apiBaseTrimmed, syncBody),
+                );
                 if (r.ok) {
                     setBanner({
                         kind: "ok",
-                        text: `Incidencia crítica registrada on-chain (hash evidencia ${evidenceHashToHex(hashBytes).slice(0, 16)}…). ${syncSuccessCopy.shipment.replace("Envío registrado", "Sincronizado")}`,
+                        text: anchorIncident
+                            ? `Incidencia del motor anclada on-chain (${sig.slice(0, 16)}…).`
+                            : `Incidencia crítica registrada y sincronizada (${sig.slice(0, 16)}…).`,
                     });
                     onSuccess();
                 } else if (r.status === 404 || r.status === 501) {
                     setBanner({
                         kind: "info",
-                        text: `Transacción confirmada (${sig.slice(0, 16)}…). El backend aún no expone POST /incidents/sync; la incidencia quedó on-chain.`,
+                        text: `Transacción confirmada (${sig.slice(0, 16)}…). Reintente sincronizar desde la consola si no aparece en el listado.`,
                     });
                     onSuccess();
                 } else {
                     setBanner({
                         kind: "err",
-                        text: `On-chain OK, pero ${userMessageForSyncFailure("la incidencia", r.status, r.json).toLowerCase()}`,
+                        text: `On-chain OK (${sig.slice(0, 12)}…), pero ${userMessageForSyncFailure("la incidencia", r.status, r.json).toLowerCase()}`,
                     });
                 }
             } else {
@@ -129,6 +166,7 @@ export function ReportCriticalIncidentForm({
             setBusy(false);
         }
     }, [
+        anchorIncident,
         apiBaseTrimmed,
         apiOk,
         connection,
@@ -150,10 +188,19 @@ export function ReportCriticalIncidentForm({
                 void onSubmit();
             }}
         >
-            <p className="text-xs text-muted mb-3">
-                Las incidencias <strong>críticas</strong> se firman en Solana. Las detecciones automáticas del
-                motor permanecen solo en base de datos.
-            </p>
+            {anchorIncident ? (
+                <p className="admin-form__info text-sm mb-3" role="status">
+                    Anclando detección automática:{" "}
+                    <strong>{incidentTypeLabel(anchorIncident.incidentType)}</strong>
+                    {anchorIncident.ruleName ? ` (${anchorIncident.ruleName})` : ""}. Revise el
+                    texto y firme para registrar en Solana.
+                </p>
+            ) : (
+                <p className="text-xs text-muted mb-3">
+                    Las incidencias <strong>críticas</strong> se firman en Solana. Las detecciones del
+                    motor pueden anclarse desde la tarjeta de la incidencia.
+                </p>
+            )}
             <div className="form-row">
                 <div className="form-group">
                     <label htmlFor="crit-inc-type">Tipo</label>
@@ -205,7 +252,11 @@ export function ReportCriticalIncidentForm({
                 disabled={busy || !description.trim()}
                 aria-busy={busy}
             >
-                {busy ? "Firmando incidencia…" : "Reportar incidencia crítica"}
+                {busy
+                    ? "Firmando y sincronizando…"
+                    : anchorIncident
+                      ? "Firmar y registrar en blockchain"
+                      : "Reportar incidencia crítica"}
             </button>
             {banner ? (
                 <p

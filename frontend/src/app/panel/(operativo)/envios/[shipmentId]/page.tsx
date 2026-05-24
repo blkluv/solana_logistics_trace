@@ -9,6 +9,7 @@ import { IncidentHubNavLink } from "@/components/incidents/IncidentHubNavLink";
 import { ReportCriticalIncidentForm } from "@/components/admin/ReportCriticalIncidentForm";
 import { ShipmentDetailWorkspace } from "@/components/shipments/ShipmentDetailWorkspace";
 import { canReportCriticalIncidentAction } from "@/lib/admin/incidentActions";
+import type { IncidentItem } from "@/lib/api/incidents";
 import { useShipmentDetail } from "@/lib/api/useShipmentDetail";
 import { getPublicConfig } from "@/lib/env";
 import { useAdminState } from "@/lib/admin/useAdminState";
@@ -22,6 +23,7 @@ export default function PanelShipmentDetailPage() {
     const { detail, error, loading, reload } = useShipmentDetail(apiBaseUrl, shipmentId, wallet);
     const { programId, connection, payer, actorOnChain, resolveShipmentPda } = useAdminState();
     const [reportOpen, setReportOpen] = useState(false);
+    const [anchorIncident, setAnchorIncident] = useState<IncidentItem | null>(null);
 
     const shipmentPda = useMemo(() => {
         if (!detail) {
@@ -41,7 +43,13 @@ export default function PanelShipmentDetailPage() {
     const onReportSuccess = useCallback(async () => {
         await reload();
         setReportOpen(false);
+        setAnchorIncident(null);
     }, [reload]);
+
+    const openReportModal = useCallback((incident: IncidentItem | null) => {
+        setAnchorIncident(incident);
+        setReportOpen(true);
+    }, []);
 
     const backLink = (
         <p className="admin-detail-back mb-0">
@@ -59,7 +67,8 @@ export default function PanelShipmentDetailPage() {
                 className="btn btn--primary btn--sm"
                 title={reportGate.reason}
                 aria-disabled={!reportGate.enabled}
-                onClick={() => setReportOpen(true)}
+                disabled={!reportGate.enabled}
+                onClick={() => openReportModal(null)}
             >
                 Reportar crítica
             </button>
@@ -96,6 +105,8 @@ export default function PanelShipmentDetailPage() {
                         onDetailReload={() => void reload()}
                         headerActions={reportButton}
                         backLink={backLink}
+                        canAnchorIncidentOnChain={reportGate.enabled}
+                        onAnchorIncidentOnChain={(inc) => openReportModal(inc)}
                     />
                 )}
             </div>
@@ -103,7 +114,10 @@ export default function PanelShipmentDetailPage() {
             <AdminModal
                 open={reportOpen}
                 title="Incidencia crítica on-chain"
-                onClose={() => setReportOpen(false)}
+                onClose={() => {
+                    setReportOpen(false);
+                    setAnchorIncident(null);
+                }}
                 size="lg"
             >
                 {!reportGate.enabled ? (
@@ -118,6 +132,7 @@ export default function PanelShipmentDetailPage() {
                         shipmentPda={shipmentPda}
                         shipmentServiceId={detail.shipmentId}
                         apiBaseUrl={apiBaseUrl}
+                        anchorIncident={anchorIncident}
                         onSuccess={() => void onReportSuccess()}
                     />
                 ) : (

@@ -12,6 +12,7 @@ import { ShipmentRecorridoAside } from "@/components/shipments/ShipmentRecorrido
 import { ShipmentTimelineTrack } from "@/components/shipments/ShipmentTimelineTrack";
 import { useShipmentIncidents } from "@/lib/api/useShipmentIncidents";
 import { useShipmentTelemetry } from "@/lib/api/useShipmentTelemetry";
+import type { IncidentItem } from "@/lib/api/incidents";
 import type { ShipmentDetail } from "@/lib/api/shipments";
 import { canResolveIncident } from "@/lib/panel/capabilities";
 import { buildMonitoringGlance } from "@/lib/telemetry/monitoringGlance";
@@ -27,6 +28,8 @@ export type ShipmentDetailWorkspaceProps = {
     headerActions?: ReactNode;
     showCheckpointTable?: boolean;
     backLink?: ReactNode;
+    canAnchorIncidentOnChain?: boolean;
+    onAnchorIncidentOnChain?: (incident: IncidentItem) => void;
 };
 
 export function ShipmentDetailWorkspace({
@@ -38,6 +41,8 @@ export function ShipmentDetailWorkspace({
     headerActions,
     showCheckpointTable = false,
     backLink,
+    canAnchorIncidentOnChain = false,
+    onAnchorIncidentOnChain,
 }: ShipmentDetailWorkspaceProps) {
     const [tab, setTab] = useState<DetailTab>("timeline");
     const [showTable, setShowTable] = useState(false);
@@ -162,6 +167,8 @@ export function ShipmentDetailWorkspace({
                                                         apiBaseUrl={apiBaseUrl}
                                                         wallet={wallet ?? ""}
                                                         canResolve={Boolean(wallet) && mayResolve}
+                                                        canAnchorOnChain={canAnchorIncidentOnChain}
+                                                        onAnchorOnChain={onAnchorIncidentOnChain}
                                                         onResolved={onIncidentResolved}
                                                     />
                                                 </li>
