@@ -3324,6 +3324,40 @@ table.data-table {
   word-break: break-all;
 }
 
+.shipment-timeline__item--incident {
+  --timeline-incident-accent: var(--color-warn, #c47a12);
+}
+
+.shipment-timeline__item--incident-lost {
+  --timeline-incident-accent: var(--color-danger, #b42318);
+}
+
+.shipment-timeline__icon--incident {
+  background: color-mix(in srgb, var(--timeline-incident-accent) 14%, #fff);
+  border: 2px solid var(--timeline-incident-accent);
+  color: var(--timeline-incident-accent);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.shipment-timeline__icon--incident-lost {
+  background: color-mix(in srgb, var(--timeline-incident-accent) 18%, #fff);
+}
+
+.shipment-timeline__type--incident {
+  color: var(--timeline-incident-accent);
+}
+
+.shipment-timeline__incident-desc {
+  margin: 0.2rem 0 0.35rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.shipment-timeline__incident-meta {
+  margin-left: 0.45rem;
+}
+
 .shipment-incident-stack {
   list-style: none;
   margin: 0;
@@ -3979,6 +4013,22 @@ table.data-table {
 
 .shipment-journey__step.is-muted .shipment-journey__label {
   opacity: 0.55;
+}
+
+.shipment-journey__step.is-loss .shipment-journey__icon-wrap {
+  background: var(--color-danger, #b42318);
+  border-color: #8f1a12;
+  color: #fff;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger, #b42318) 22%, transparent);
+}
+
+.shipment-journey__step.is-loss .shipment-journey__label {
+  color: var(--color-danger, #b42318);
+  font-weight: 650;
+}
+
+.shipment-journey__step.is-loss.is-current .shipment-journey__here {
+  color: var(--color-danger, #b42318);
 }
 
 .shipment-journey__exception {

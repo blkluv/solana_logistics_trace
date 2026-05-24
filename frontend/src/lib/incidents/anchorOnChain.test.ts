@@ -40,5 +40,8 @@ describe("anchorOnChain", () => {
         expect(mapAutoIncidentToOnChainType("SHIPMENT_DELAYED")).toBe(
             CriticalIncidentTypeCode.Delay,
         );
+        expect(mapAutoIncidentToOnChainType("SHIPMENT_LOST")).toBe(
+            CriticalIncidentTypeCode.Lost,
+        );
     });
 });

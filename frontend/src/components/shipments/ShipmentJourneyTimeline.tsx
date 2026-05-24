@@ -4,6 +4,8 @@ import { JourneyStepTooltip } from "@/components/shipments/JourneyStepTooltip";
 import { JourneyStepIcon, IconMapPin } from "@/components/ui/TraceIcons";
 import { useLocationsCatalog } from "@/lib/api/useLocationsCatalog";
 import type { CheckpointItem } from "@/lib/api/shipments";
+import type { IncidentItem } from "@/lib/api/incidents";
+import { resolveLossJourneyStepId } from "@/lib/incidents/criticalIncidentFlow";
 import { resolveEndpointDisplay } from "@/lib/shipments/locationEndpoint";
 import {
     buildEndpointInsight,
@@ -21,6 +23,7 @@ export type ShipmentJourneyTimelineProps = {
     checkpoints: CheckpointItem[];
     createdAt: string;
     apiBaseUrl?: string;
+    incidents?: readonly IncidentItem[];
 };
 
 export function ShipmentJourneyTimeline({
@@ -30,6 +33,7 @@ export function ShipmentJourneyTimeline({
     checkpoints,
     createdAt,
     apiBaseUrl,
+    incidents = [],
 }: ShipmentJourneyTimelineProps) {
     const { items: locationCatalog } = useLocationsCatalog(apiBaseUrl);
     const originDisplay = resolveEndpointDisplay(origin, locationCatalog);
@@ -39,6 +43,7 @@ export function ShipmentJourneyTimeline({
         .map((c) => c.type);
     const steps = resolveJourneyStepStates(status, logisticsTypes);
     const nowStepId = resolveNowStepId(checkpoints, createdAt);
+    const lossStepId = resolveLossJourneyStepId(incidents, checkpoints, createdAt);
     const exception = exceptionStatusLabel(status);
 
     const originInsight = buildEndpointInsight(
@@ -113,6 +118,7 @@ export function ShipmentJourneyTimeline({
                                 state === "past" && "is-past",
                                 state === "future" && "is-future",
                                 state === "offpath" && "is-muted",
+                                lossStepId === step.id && "is-loss",
                             ]
                                 .filter(Boolean)
                                 .join(" ");
