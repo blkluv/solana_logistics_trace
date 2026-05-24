@@ -24,9 +24,13 @@ async fn actor_map_for_shipment(
     pool: &PgPool,
     sender: &str,
     recipient: &str,
+    carrier: Option<&str>,
     cp_rows: &[crate::repos::checkpoints::CheckpointListRow],
 ) -> Result<HashMap<String, (String, String)>, sqlx::Error> {
     let mut wallets = vec![sender.to_string(), recipient.to_string()];
+    if let Some(c) = carrier {
+        wallets.push(c.to_string());
+    }
     for row in cp_rows {
         if !wallets.iter().any(|w| w == &row.actor_wallet) {
             wallets.push(row.actor_wallet.clone());
@@ -85,15 +89,20 @@ pub async fn list_shipment_checkpoints(
                 Json(json!({"error": "database error"})),
             )
         })?;
-    let actor_map =
-        actor_map_for_shipment(pool.inner(), &shipment_row.sender_wallet, &shipment_row.recipient_wallet, &cp_rows)
-            .await
-            .map_err(|_| {
-                (
-                    Status::InternalServerError,
-                    Json(json!({"error": "database error"})),
-                )
-            })?;
+    let actor_map = actor_map_for_shipment(
+        pool.inner(),
+        &shipment_row.sender_wallet,
+        &shipment_row.recipient_wallet,
+        shipment_row.carrier_wallet.as_deref(),
+        &cp_rows,
+    )
+    .await
+    .map_err(|_| {
+        (
+            Status::InternalServerError,
+            Json(json!({"error": "database error"})),
+        )
+    })?;
     Ok(Json(
         cp_rows
             .into_iter()
@@ -135,6 +144,7 @@ pub async fn get_shipment(
         pool.inner(),
         &shipment_row.sender_wallet,
         &shipment_row.recipient_wallet,
+        shipment_row.carrier_wallet.as_deref(),
         &cp_rows,
     )
     .await

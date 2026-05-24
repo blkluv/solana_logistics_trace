@@ -1,11 +1,13 @@
 //! Etapa 1 — sync pipeline (§8–§9). Handlers stay thin; orchestration here; SQL in `repos/`.
 
 mod actor;
+mod assign_carrier;
 mod checkpoint;
 mod incident;
 mod shipment;
 
 pub use actor::sync_actor;
+pub use assign_carrier::sync_assign_carrier;
 pub use checkpoint::sync_checkpoint;
 pub use incident::sync_incident;
 pub use shipment::sync_shipment;
@@ -137,6 +139,15 @@ pub(super) fn validate_signature_base58(sig: &str) -> Result<(), SolanaSyncError
 
 pub(super) fn pubkey_bs58(bytes: &[u8; 32]) -> String {
     bs58::encode(bytes).into_string()
+}
+
+#[must_use]
+pub(super) fn optional_carrier_wallet(bytes: &[u8; 32]) -> Option<String> {
+    if bytes.iter().all(|&b| b == 0) {
+        None
+    } else {
+        Some(pubkey_bs58(bytes))
+    }
 }
 
 pub(super) fn actor_role_code(

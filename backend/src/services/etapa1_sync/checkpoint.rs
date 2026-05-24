@@ -8,7 +8,8 @@ use super::{
     first_matching_account, pubkey_bs58, validate_signature_base58, CheckpointSyncResponse,
     SyncOutcome, SyncRequestBody,
 };
-use crate::repos::checkpoints;
+use crate::domain::shipment_status;
+use crate::repos::{checkpoints, shipments};
 use crate::services::shipment_status_transition;
 use crate::solana::decode::{checkpoint_type_code, decode_checkpoint_account};
 use crate::solana::discriminators::record_checkpoint_ix;
@@ -103,6 +104,15 @@ pub async fn sync_checkpoint(
     let on_chain_cp_i64: i64 = checkpoint.id.try_into().map_err(|_| {
         SolanaSyncError::Validation("on_chain_checkpoint_id overflow".into())
     })?;
+
+    let current_status = shipments::select_status_by_id(pool, shipment_uuid)
+        .await
+        .map_err(|e| SolanaSyncError::Validation(e.to_string()))?;
+    if shipment_status::blocks_new_checkpoints(&current_status) {
+        return Err(SolanaSyncError::Validation(
+            "shipment is delivered or closed; cannot add checkpoints".into(),
+        ));
+    }
 
     let mut txdb = pool
         .begin()

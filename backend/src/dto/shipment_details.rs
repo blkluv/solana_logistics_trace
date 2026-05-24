@@ -357,6 +357,7 @@ mod tests {
             reference_code: "PO-1".into(),
             priority: ShipmentPrioritySchema::Urgent,
             notes: "fragil".into(),
+            carrier: [0; 32],
         };
         let d = shipment_details_from_account(&s);
         assert_eq!(d.weight_kg, Some(12.5));
