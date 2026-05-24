@@ -169,3 +169,56 @@ fn carrier_may_report_critical_incident() {
         .send()
         .expect("carrier report_critical_incident");
 }
+
+#[test]
+#[serial_test::serial]
+fn cannot_report_incidents_after_loss_registered() {
+    let payer = ephemeral_funded_payer();
+    let client = client_with_payer(&payer);
+    let program = client.program(ID).unwrap();
+    initialize_if_needed(&program);
+
+    let (shipment_pda, sender_actor_pda, _) = setup_shipment(&program, &payer);
+
+    program
+        .request()
+        .accounts(ReportCriticalIncident {
+            reporter: payer.pubkey(),
+            reporter_actor: sender_actor_pda,
+            program_config: cfg_pda(),
+            shipment: shipment_pda,
+        })
+        .args(ReportCriticalIncidentIx {
+            incident_type: CriticalIncidentType::Lost,
+            severity: OnChainIncidentSeverity::Critical,
+            evidence_hash: [9u8; 32],
+            description: "Shipment lost".to_string(),
+        })
+        .send()
+        .expect("report loss");
+
+    let shipment_acc = program
+        .rpc()
+        .get_account(&shipment_pda)
+        .expect("shipment account");
+    let shipment = Shipment::try_deserialize(&mut &shipment_acc.data[..]).expect("decode Shipment");
+    assert_eq!(shipment.status, ShipmentStatus::Lost);
+
+    let err = program
+        .request()
+        .accounts(ReportCriticalIncident {
+            reporter: payer.pubkey(),
+            reporter_actor: sender_actor_pda,
+            program_config: cfg_pda(),
+            shipment: shipment_pda,
+        })
+        .args(ReportCriticalIncidentIx {
+            incident_type: CriticalIncidentType::Damage,
+            severity: OnChainIncidentSeverity::High,
+            evidence_hash: [2u8; 32],
+            description: "Damage after loss".to_string(),
+        })
+        .send();
+
+    assert!(err.is_err(), "second incident must fail after loss");
+}

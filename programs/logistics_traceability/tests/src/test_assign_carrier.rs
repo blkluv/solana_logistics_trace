@@ -48,8 +48,7 @@ fn sender_assigns_carrier_once() {
         .send()
         .expect("register sender");
 
-    let carrier_kp = Keypair::new();
-    fund_keypair(&carrier_kp);
+    let carrier_kp = ephemeral_funded_payer();
     let (carrier_actor_pda, _) =
         Pubkey::find_program_address(&[ACTOR_SEED, carrier_kp.pubkey().as_ref()], &ID);
     let carrier_program = client_with_payer(&carrier_kp).program(ID).unwrap();

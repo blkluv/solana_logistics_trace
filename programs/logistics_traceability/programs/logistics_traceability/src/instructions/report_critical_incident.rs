@@ -55,7 +55,8 @@ pub fn process_report_critical_incident(
     let shipment = &ctx.accounts.shipment;
     require!(
         shipment.status != ShipmentStatus::Delivered
-            && shipment.status != ShipmentStatus::Cancelled,
+            && shipment.status != ShipmentStatus::Cancelled
+            && shipment.status != ShipmentStatus::Lost,
         ErrorCode::ShipmentAlreadyClosed
     );
     require!(
@@ -68,6 +69,9 @@ pub fn process_report_critical_incident(
     );
 
     let shipment = &mut ctx.accounts.shipment;
+    if incident_type == CriticalIncidentType::Lost {
+        shipment.status = ShipmentStatus::Lost;
+    }
     shipment.incident_count = shipment
         .incident_count
         .checked_add(1)

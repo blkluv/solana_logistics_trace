@@ -2,7 +2,7 @@
 
 use anchor_lang::prelude::*;
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace, Debug)]
 pub enum ShipmentStatus {
     Created,
     InTransit,
@@ -11,6 +11,8 @@ pub enum ShipmentStatus {
     Delivered,
     Returned,
     Cancelled,
+    /// Pérdida registrada on-chain; no admite más incidencias ni checkpoints.
+    Lost,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace, Default)]
