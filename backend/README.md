@@ -1,19 +1,47 @@
-# Backend `logistics_trace` (Rocket + PostgreSQL)
+# Backend — TraceSol Logistics
 
-API HTTP Etapa 1: sincronización on-chain → Postgres (`POST /api/v1/*/sync`) y health check.
+API HTTP en **Rust** (Rocket) con **PostgreSQL** (SQLx). Sincroniza transacciones Solana, expone consultas y ejecuta el motor de incidencias.
+
+Documentación general: [README principal](../README.md).
+
+---
+
+## Responsabilidades
+
+- Sync on-chain → Postgres: `POST /api/v1/{actors,shipments,checkpoints,incidents}/sync`
+- Consultas de envíos, checkpoints, incidencias, telemetría
+- Catálogos de solo lectura
+- `GET /health` en la raíz del servidor
+
+---
+
+## Requisitos
+
+- Rust (edición 2021)
+- PostgreSQL — [infra/README.md](../infra/README.md)
+- `PROGRAM_ID` y RPC Solana alineados con el frontend
+
+---
 
 ## Configuración
 
-1. Base de datos: desde la raíz del repo, `docker compose -f infra/docker-compose.yml up -d` (ver `infra/README.md`).
-2. Copiar variables de entorno:
+```bash
+docker compose -f infra/docker-compose.yml up -d
+cd backend
+cp .env.example .env
+```
 
-   ```bash
-   cp .env.example .env
-   ```
+| Variable | Descripción |
+|----------|-------------|
+| `DATABASE_URL` | Postgres |
+| `BACKEND_PORT` | Puerto (default `8000`) |
+| `CORS_ALLOWED_ORIGINS` | Origen Next.js |
+| `PROGRAM_ID` | Igual que `NEXT_PUBLIC_PROGRAM_ID` |
+| `SOLANA_RPC_URL` | RPC de lectura |
 
-   Ajustar `DATABASE_URL`, `PROGRAM_ID` (id real tras `anchor deploy`), `SOLANA_RPC_URL` y `CORS_ALLOWED_ORIGINS` (origen del Next.js, p. ej. `http://localhost:3000`).
+Referencia: [`.env.example`](../.env.example).
 
-3. El **`PROGRAM_ID`** debe ser el mismo que `NEXT_PUBLIC_PROGRAM_ID` en el frontend.
+---
 
 ## Ejecución
 
@@ -21,19 +49,34 @@ API HTTP Etapa 1: sincronización on-chain → Postgres (`POST /api/v1/*/sync`) 
 cargo run
 ```
 
-Por defecto escucha en el puerto definido por `BACKEND_PORT` (8000). Rutas sync bajo **`/api/v1`** (p. ej. `POST /api/v1/actors/sync`). Health: **`GET /health`** en la raíz del servidor (`http://localhost:8000/health`).
+Migraciones automáticas al iniciar. API: `http://localhost:8000/api/v1`.
 
-### Catálogos (solo lectura, Etapa 1)
+---
 
-JSON: arreglo de `{ code, label, description, sort_order }` (`sort_order` es entero; filas con `is_active = false` no se listan).
+## Endpoints principales
 
-| Método | Ruta |
-|--------|------|
-| `GET` | `/api/v1/catalogs/actor-roles` |
-| `GET` | `/api/v1/catalogs/checkpoint-types` |
-| `GET` | `/api/v1/catalogs/shipment-statuses` |
-| `GET` | `/api/v1/catalogs/incident-types` |
+**Sync:** `POST /api/v1/actors|shipments|checkpoints|incidents/sync` — cuerpo `{ "tx_hash": "..." }`.
 
-## Referencia global de entorno
+**Consulta:** `GET /api/v1/shipments`, `GET /api/v1/public/shipments/:id`, incidencias, telemetría, hub.
 
-En la raíz del monorepo existe `.env.example` con todas las variables (app + front + back + Solana) para copiar a un único `.env` si tu flujo lo usa así.
+**Catálogos:** `GET /api/v1/catalogs/*`
+
+---
+
+## Pruebas
+
+```bash
+cargo test
+```
+
+---
+
+## Orden de arranque
+
+1. [infra](../infra/README.md) → 2. [Anchor](../programs/logistics_traceability/README.md) → 3. **Backend** → 4. [frontend](../frontend/README.md)
+
+---
+
+## Rama Git
+
+Rama `backend` → merge a `main`.
