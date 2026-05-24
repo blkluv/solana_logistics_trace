@@ -96,6 +96,10 @@ describe("resolveOperationalJourneyStepId", () => {
         expect(resolveOperationalJourneyStepId("Created", [])).toBe("created");
         expect(resolveOperationalJourneyStepId("Created", [pickupCp])).toBe("pickup");
     });
+
+    it("falls back to checkpoints for Lost status", () => {
+        expect(resolveOperationalJourneyStepId("Lost", [pickupCp])).toBe("pickup");
+    });
 });
 
 describe("resolveNowStepId", () => {
