@@ -62,6 +62,7 @@ pub struct ShipmentAccountData {
     pub reference_code: String,
     pub priority: ShipmentPrioritySchema,
     pub notes: String,
+    pub carrier: [u8; 32],
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Debug, Clone, Copy, PartialEq, Eq)]

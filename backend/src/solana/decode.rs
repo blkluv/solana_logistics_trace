@@ -108,6 +108,7 @@ mod tests {
             reference_code: String::new(),
             priority: crate::solana::borsh_accounts::ShipmentPrioritySchema::Normal,
             notes: String::new(),
+            carrier: [0u8; 32],
         };
         let mut buf = disc.to_vec();
         buf.extend_from_slice(&borsh::to_vec(&inner).expect("serialize"));
