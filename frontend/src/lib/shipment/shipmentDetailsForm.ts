@@ -70,7 +70,7 @@ function parsePositiveInt(raw: string): number | null {
     return Number.isInteger(n) ? n : null;
 }
 
-/** Convierte valor de `<input type="date">` (YYYY-MM-DD) a ISO UTC (medianoche UTC). */
+/** Convierte valor de `<input type="date">` (YYYY-MM-DD) a ISO UTC (mediodía UTC, evita −1 día en TZ). */
 export function dateInputToIsoUtc(dateValue: string): string | null {
     const t = dateValue.trim();
     if (!t) {
@@ -83,7 +83,7 @@ export function dateInputToIsoUtc(dateValue: string): string | null {
     const year = Number(m[1]);
     const month = Number(m[2]);
     const day = Number(m[3]);
-    const d = new Date(Date.UTC(year, month - 1, day));
+    const d = new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
     if (
         d.getUTCFullYear() !== year ||
         d.getUTCMonth() !== month - 1 ||
@@ -169,4 +169,23 @@ export function formatWeightKg(kg: number): string {
 export function formatQuantityLine(quantity: number, unit: string | null): string {
     const u = unit?.trim() || "unidades";
     return `${quantity.toLocaleString()} ${u}`;
+}
+
+/** Muestra la fecha calendario de entrega estimada sin desplazamiento por zona horaria. */
+export function formatEstimatedDeliveryDate(iso: string): string {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso.trim());
+    if (m) {
+        const year = Number(m[1]);
+        const month = Number(m[2]) - 1;
+        const day = Number(m[3]);
+        return new Date(year, month, day).toLocaleDateString(undefined, { dateStyle: "medium" });
+    }
+    try {
+        return new Date(iso).toLocaleDateString(undefined, {
+            dateStyle: "medium",
+            timeZone: "UTC",
+        });
+    } catch {
+        return iso;
+    }
 }

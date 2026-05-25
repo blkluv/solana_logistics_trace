@@ -2,6 +2,7 @@
 
 import type { ShipmentDetail } from "@/lib/api/shipments";
 import {
+    formatEstimatedDeliveryDate,
     formatQuantityLine,
     formatWeightKg,
     priorityLabel,
@@ -14,14 +15,6 @@ export type ShipmentOperationalDetailsProps = {
     /** Si true, usa rejilla de métricas del hero; si false, lista en resumen. */
     variant?: "metrics" | "summary";
 };
-
-function formatDateOnly(iso: string): string {
-    try {
-        return new Date(iso).toLocaleDateString(undefined, { dateStyle: "medium" });
-    } catch {
-        return iso;
-    }
-}
 
 export function hasOperationalDetails(detail: ShipmentDetail): boolean {
     return (
@@ -61,7 +54,7 @@ export function ShipmentOperationalDetails({
                     <p className="mb-1">
                         <span className="text-muted">Entrega estimada:</span>{" "}
                         <time dateTime={detail.estimatedDeliveryAt}>
-                            {formatDateOnly(detail.estimatedDeliveryAt)}
+                            {formatEstimatedDeliveryDate(detail.estimatedDeliveryAt)}
                         </time>
                     </p>
                 ) : null}
@@ -117,7 +110,7 @@ export function ShipmentOperationalDetails({
                     <dt>Entrega est.</dt>
                     <dd>
                         <time dateTime={detail.estimatedDeliveryAt}>
-                            {formatDateOnly(detail.estimatedDeliveryAt)}
+                            {formatEstimatedDeliveryDate(detail.estimatedDeliveryAt)}
                         </time>
                     </dd>
                 </div>

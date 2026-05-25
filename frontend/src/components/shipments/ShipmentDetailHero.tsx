@@ -6,6 +6,7 @@ import { IconPackage, IconThermometer } from "@/components/ui/TraceIcons";
 import type { IncidentItem } from "@/lib/api/incidents";
 import type { ShipmentDetail } from "@/lib/api/shipments";
 import { ShipmentOperationalDetails } from "@/components/shipments/ShipmentOperationalDetails";
+import { formatEstimatedDeliveryDate } from "@/lib/shipment/shipmentDetailsForm";
 import { statusBadgeClass, statusLabel } from "@/lib/shipments/display";
 import { formatParticipantLine, formatParticipantSub } from "@/lib/wallet/display";
 
@@ -24,14 +25,6 @@ function formatDate(iso: string): string {
             dateStyle: "medium",
             timeStyle: "short",
         });
-    } catch {
-        return iso;
-    }
-}
-
-function formatDateOnly(iso: string): string {
-    try {
-        return new Date(iso).toLocaleDateString(undefined, { dateStyle: "medium" });
     } catch {
         return iso;
     }
@@ -134,7 +127,7 @@ export function ShipmentDetailHero({
                                 </time>
                             ) : detail.estimatedDeliveryAt ? (
                                 <time dateTime={detail.estimatedDeliveryAt}>
-                                    Est. {formatDateOnly(detail.estimatedDeliveryAt)}
+                                    Est. {formatEstimatedDeliveryDate(detail.estimatedDeliveryAt)}
                                 </time>
                             ) : (
                                 <span className="shipment-hero__metric-pending">Pendiente</span>
