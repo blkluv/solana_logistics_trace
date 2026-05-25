@@ -198,7 +198,7 @@ export default function AdminShipmentDetailPage() {
                 open={assignOpen}
                 title="Asignar transportista"
                 onClose={() => setAssignOpen(false)}
-                size="md"
+                size="lg"
             >
                 {!assignGate.enabled ? (
                     <p className="text-sm mb-0" role="status">
