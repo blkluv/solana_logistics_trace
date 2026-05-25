@@ -96,7 +96,7 @@ export function AssignCarrierForm({
 
     return (
         <div className="assign-carrier-form">
-            <p className="text-sm text-muted mb-3">
+            <p className="assign-carrier-form__intro text-sm text-muted">
                 Solo usted como remitente puede asignar un Carrier registrado en la red. La operación
                 queda registrada on-chain.
             </p>
@@ -108,10 +108,11 @@ export function AssignCarrierForm({
                     <code>/registro</code> antes de asignar.
                 </p>
             ) : (
-                <label className="form-field">
-                    <span className="form-label">Transportista</span>
+                <div className="form-group assign-carrier-form__field">
+                    <label htmlFor="assign-carrier-select">Transportista</label>
                     <select
-                        className="form-input"
+                        id="assign-carrier-select"
+                        className="select"
                         value={selected}
                         disabled={busy}
                         onChange={(e) => setSelected(e.target.value)}
@@ -123,22 +124,22 @@ export function AssignCarrierForm({
                             </option>
                         ))}
                     </select>
-                </label>
+                </div>
             )}
-            {error && (
-                <p className="text-sm mt-2" role="alert">
+            {error ? (
+                <p className="text-sm assign-carrier-form__feedback" role="alert">
                     {error}
                 </p>
-            )}
-            {status && (
-                <p className="text-sm text-muted mt-2" role="status">
+            ) : null}
+            {status ? (
+                <p className="text-sm text-muted assign-carrier-form__feedback" role="status">
                     {status}
                 </p>
-            )}
-            <div className="mt-3">
+            ) : null}
+            <div className="assign-carrier-form__actions">
                 <button
                     type="button"
-                    className="btn btn--primary btn--sm"
+                    className="btn btn--primary"
                     disabled={busy || loadingList || carriers.length === 0 || !selected}
                     onClick={() => void onSubmit()}
                 >

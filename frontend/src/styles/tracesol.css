@@ -1773,6 +1773,33 @@ table.data-table {
   padding: 1.15rem;
 }
 
+.assign-carrier-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.assign-carrier-form__intro {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.assign-carrier-form__field {
+  margin-bottom: 0;
+}
+
+.assign-carrier-form__feedback {
+  margin: 0;
+}
+
+.assign-carrier-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--color-border);
+  margin-top: 0.15rem;
+}
+
 /* —— Forms —— */
 .form-group {
   margin-bottom: 1rem;
