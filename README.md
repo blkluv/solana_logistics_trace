@@ -6,6 +6,20 @@ Monorepo organizado por componentes (`infra`, programa Anchor, backend Rocket, f
 
 ---
 
+## Documentación del proyecto
+
+Documentación técnica y funcional en [`docs/`](docs/). Lectura sugerida para arquitectos, desarrolladores y operaciones:
+
+| Documento | Enfoque |
+|---------|---------|
+| [01 — Arquitectura del sistema](docs/01_SYSTEM_ARCHITECTURE.md) | Capas, flujo wallet → Solana → sync → PostgreSQL, principios Web3, escalabilidad |
+| [02 — Especificación funcional](docs/02_FUNCTIONAL_SPECIFICATION.md) | Módulos, roles, ciclo de vida del envío, casos de uso, consulta pública |
+| [03 — Blockchain y sincronización](docs/03_BLOCKCHAIN_SYNC_ARCHITECTURE.md) | Arquitectura híbrida, `tx_hash`, idempotencia, decodificación Anchor |
+| [04 — Incident Intelligence Engine](docs/04_INCIDENT_INTELLIGENCE_ENGINE.md) | Motor de incidencias, telemetría, reglas automáticas, anclaje on-chain |
+| [05 — Modelo de dominio y base de datos](docs/05_DATABASE_AND_DOMAIN_MODEL.md) | Esquema PostgreSQL, entidades, catálogos, índices, auditoría |
+
+---
+
 ## Arquitectura
 
 | Componente | Tecnología | Responsabilidad |
