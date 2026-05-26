@@ -4,6 +4,16 @@ Plataforma de **trazabilidad logística** con evidencia verificable en **Solana*
 
 Monorepo organizado por componentes (`infra`, programa Anchor, backend Rocket, frontend Next.js). Cada módulo tiene su propia guía de arranque; este documento describe el **orden recomendado** y un **inicio rápido** de punta a punta.
 
+## Demo funcional (vídeo)
+
+Recorrido en vídeo de la plataforma: roles, flujo operativo, envíos, checkpoints, incidencias y consulta pública.
+
+| Recurso | Descripción |
+|---------|-------------|
+| [Demo TraceSol](docs/Demo%20Tracesol.mp4) | Explicación funcional de punta a punta (archivo local en `docs/`) |
+
+En GitHub, abre el enlace y usa **Download** o **View raw** según el navegador. En clone local, reproduce el MP4 desde `docs/Demo Tracesol.mp4`.
+
 ---
 
 ## Documentación del proyecto
